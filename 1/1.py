@@ -14,10 +14,14 @@ def main():
     #print(len(depths))
     #print(depths)
     
-    print(count_increases_1(depths))
+    #print(count_increases_1(depths))
     #print(count_increases_2(depths))
     print(count_increases_3(depths))
+    #print(window_1(depths))
+    print(window_2(depths))
     
+# Part 1
+
 def count_increases_1(depths):
     '''First attempt'''
     increases = 0
@@ -46,6 +50,19 @@ def count_increases_2(depths):
 def count_increases_3(depths):
     '''The fun one I wanted to write, but actually cribbed from reddit'''
     return sum((b>a) for (a,b) in zip(depths, depths[1:]))
+
+# Part 2
+
+def window_1(depths):
+    '''More like the instructions suggest'''
+    windows = zip(depths, depths[1:], depths[2:])
+    totals = [sum(w) for w in windows]
+    increases = count_increases_3(totals)
+    return increases
+
+def window_2(depths):
+    '''a+b+c vs b+c+d is same as a vs d'''
+    return sum((b>a) for (a,b) in zip(depths, depths[3:]))
 
 if __name__ == '__main__':
     sys.exit(main())
