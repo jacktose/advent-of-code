@@ -2,7 +2,7 @@
 
 """
 https://adventofcode.com/2021/day/4
-
+Bingo with a squid!
 """
 
 import sys
@@ -12,8 +12,8 @@ def main():
     data = get_input()
     print('part 1:')
     print(part_1(data))
-    #print('\npart 2:')
-    #print(part_2(data))
+    print('\npart 2:')
+    print(part_2(data))
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
@@ -22,34 +22,42 @@ def get_input(file='./input'):
     return data
 
 def part_1(data):
-    draws = data.pop(0).split(',')
-    boards = [Board(b) for b in data]
-    print(f'parsed {len(boards)} boards')
-    breakpoint()
-    ## test:
-    #boards[0].marks[0] = [True] * len(boards[0].marks[0])
-    #boards[0].mark(12)
-    #print(boards[0].bingo())
-    #print(boards[0].score())
+    '''Find the first winning board's score'''
+    draws = data[0].split(',')
+    boards = [Board(b) for b in data[1:]]
+    #print(f'parsed {len(boards)} boards')
     for number in draws:
-        print(number)
-        bingo_board = mark_boards(boards, number)
-        if bingo_board:
-            print('WINNER!')
-            pprint(bingo_board.board)
-            pprint(bingo_board.marks)
-            pprint(f'{bingo_board.score() = }')
-            return True
+        print(number, end=' ')
+        for board in boards:
+            board.mark(number)
+            if board.bingo:
+                print('\nWINNER!')
+                pprint(board.board)
+                pprint(board.marks)
+                #print(f'{board.score() = }')
+                return board.score()
     else:
         return False
 
-def mark_boards(boards, number):
-    for board in boards:
-        board.mark(number)
-        if board.bingo():
-            return board
-    else:
-        return False
+def part_2(data):
+    '''Find the last winning board's score'''
+    draws = data.pop(0).split(',')
+    boards = [Board(b) for b in data]
+    #print(f'parsed {len(boards)} boards')
+    bingo_boards = []
+    for number in draws:
+        print(number, end=' ')
+        for board in boards:
+            if board.bingo:
+                continue
+            board.mark(number)
+            if board.bingo:
+                bingo_boards.append(board)
+    print('\nLast winner:')
+    pprint(bingo_boards[-1].board)
+    pprint(bingo_boards[-1].marks)
+    #print(f'final score: {bingo_boards[-1].score() = }')
+    return bingo_boards[-1].score()
 
 
 class Board:
@@ -58,6 +66,7 @@ class Board:
         self.board = tuple(row.split() for row in tuple(boardstring.strip().split('\n')))
         self.marks = [[False]*len(row) for row in self.board]
         self.last_draw = None
+        self.bingo = False
 
     def mark(self, number):
         '''Mark board space if&where number is found'''
@@ -73,16 +82,18 @@ class Board:
             return False
         #print(f'found {number} at row {row_idx}, col {col_idx}')
         self.marks[row_idx][col_idx] = True
+        self.bingo = self._bingo()
+        return True
 
-    def bingo(self):
+    def _bingo(self):
         '''Does this board have a bingo?'''
         for row_idx, row in enumerate(self.marks):
             if False not in row:
-                print(f'BINGO! in row {row_idx}')
+                #print(f'BINGO! in row {row_idx}')
                 return True
         for col_idx in range(len(self.marks[0])):
             if False not in [row[col_idx] for row in self.marks]:
-                print(f'BINGO! in col {col_idx}')
+                #print(f'BINGO! in col {col_idx}')
                 return True
         return False
 
@@ -91,7 +102,6 @@ class Board:
         #Start by finding the sum of all unmarked numbers on that board
         score = 0
         for row_idx, row in enumerate(self.board):
-            #score += sum([int(number) for col_idx, number in enumerate(row) if not self.marks[row_idx][col_idx]])
             for col_idx, number in enumerate(row):
                 if self.marks[row_idx][col_idx] is False:
                     score += int(number)
