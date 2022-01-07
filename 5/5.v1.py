@@ -7,14 +7,17 @@ Day 5: Hydrothermal Venture
 
 import sys
 import re
-from collections import defaultdict
+from collections import namedtuple, defaultdict
+from functools import cached_property
+
+PRINT_GRID = False
 
 def main():
     data = get_input()
     print('part 1:')
-    print(part_1(data, print_grid=True))
+    print(part_1(data, print_grid=PRINT_GRID))
     print('\npart 2:')
-    print(part_2(data, print_grid=True))
+    print(part_2(data, print_grid=PRINT_GRID))
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
@@ -39,6 +42,8 @@ def part_2(data, print_grid=False):
     if print_grid: print(grid)
     return grid.intersections()
 
+
+Point = namedtuple('Point', ['x', 'y'])
 
 class Line:
     '''Two points of two dimensions'''
@@ -93,8 +98,8 @@ class Line:
     def bottom(self):
         return max(self.y1, self.y2)
     
-    #@cached_property
-    @property
+    #@property
+    @cached_property
     def points(self):
         if self.horizontal:
             return tuple((x,self.y1) for x in ri_range(self.x1, self.x2))
@@ -121,7 +126,7 @@ class Grid:
     def __str__(self):
         '''as in the example'''
         string = ''
-        x_len, y_len = self.size()
+        x_len, y_len = self.size
         # can't really use a comprehension because first order is columns
         for y in range(y_len):
             for x in range(x_len):
@@ -142,6 +147,7 @@ class Grid:
             string += '\n'
         return string.strip()
     
+    @property
     def size(self):
         x_max = max(max(y.keys() for y in self.grid.values()))
         y_max = max(x for x in self.grid.keys())
@@ -155,6 +161,9 @@ class Grid:
                 if n_lines > 1:
                     intersections += 1
         return intersections
+    
+    def points(self):
+        return sum(len(col) for col in self.grid.values())
 
 
 class c:
