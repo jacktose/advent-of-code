@@ -17,6 +17,7 @@ def main():
 def get_input(file='./input'):
     with open(file, 'r') as f:
         # read every other character -> convert to int -> count frequency:
+        # [::2] is sliiightly faster than .split(',')
         # (collections.Counter is the fastest way to count (see bottom))
         data = Counter((int(n) for n in f.read()[::2]))
     return data
