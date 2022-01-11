@@ -8,10 +8,12 @@ Day 8: Seven Segment Search
 import sys
 from timeit import timeit
 
+fset = frozenset
+
 def main():
     ex1_data = get_input('./example1')
     ex2_data = get_input('./example2')
-    data = get_input()
+    data = get_input('./input')
 
     print('example 1:')
     print(part_1(ex2_data))
@@ -37,7 +39,12 @@ def get_input(file='./input'):
     (('gbcefa', 'eac', 'acfbg', 'ae', 'dcabfg', 'begcdaf', 'ecgba', 'fgaedc', 'beaf', 'gcbde'), ('cbgfa', 'gedcb', 'fgecab', 'fbagdc'))
     '''
     with open(file, 'r') as f:
-        data = [(tuple(d[:58].split()), tuple(d[61:].split())) for d in f.readlines()]
+        data = [
+            (
+                fset( map(fset, d[:58].split())),
+                tuple(map(fset, d[61:].split())),
+            ) for d in f.readlines()
+        ]
     return data
 
 def part_1(data):
@@ -60,10 +67,10 @@ def part_2(data, debug=False):
     total = 0
     for signal, output_scrambled in data:
         key = key_from_sigs(signal)
-        output_digits = (str(decode(pattern, key)) for pattern in output_scrambled)
+        output_digits = (decode(pattern, key) for pattern in output_scrambled)
         output_number = int(''.join(str(d) for d in output_digits))
         if debug:
-            print(f'{" ".join(output_scrambled)} ->\t{output_number}')
+            print(f'{" ".join("".join(sorted(p)) for p in output_scrambled)} ->\t{output_number}')
         total += output_number
     return total
 
@@ -79,12 +86,11 @@ def key_from_sigs(signals):
     e    f
      gggg 
     '''
-    patterns = (set(p) for p in signals)
     digits = {}
     digits[235] = []
     digits[690] = []
     
-    for p in patterns:
+    for p in signals:
         match len(p):
             case 2:  # 1
                 digits[1] = p
@@ -104,8 +110,8 @@ def key_from_sigs(signals):
     segs['acf'] = digits[7]
     segs['bcdf'] = digits[4]
     segs['abcdefg'] = digits[8]
-    segs['adg'] = set.intersection(*digits[235])
-    segs['abfg'] = set.intersection(*digits[690])
+    segs['adg'] = fset.intersection(*digits[235])
+    segs['abfg'] = fset.intersection(*digits[690])
     segs['a'] = segs['acf'] - segs['cf']
     segs['b'] = segs['abfg'] - segs['acf'] - segs['adg']
     segs['c'] = segs['cf'] - segs['abfg']
@@ -114,24 +120,24 @@ def key_from_sigs(signals):
     segs['f'] = segs['cf'] - segs['c']
     segs['g'] = segs['adg'] - segs['a'] - segs['d']
     
-    segtrans = {segs[s].pop(): s for s in 'abcdefg'}
-    return str.maketrans(segtrans)
+    segtrans = {next(iter(segs[s])): s for s in 'abcdefg'}
+    return segtrans
 
 _digit = {
-    'abcefg':   0,
-    'cf':       1,
-    'acdeg':    2,
-    'acdfg':    3,
-    'bcdf':     4,
-    'abdfg':    5,
-    'abdefg':   6,
-    'acf':      7,
-    'abcdefg':  8,
-    'abcdfg':   9,
+    fset('abcefg'):  0,
+    fset('cf'):      1,
+    fset('acdeg'):   2,
+    fset('acdfg'):   3,
+    fset('bcdf'):    4,
+    fset('abdfg'):   5,
+    fset('abdefg'):  6,
+    fset('acf'):     7,
+    fset('abcdefg'): 8,
+    fset('abcdfg'):  9,
 }
 def decode(segments_scrambled, key):
     '''e.g. 'gbcefa' -> 'abdefg' -> 6'''
-    segments = ''.join(sorted(segments_scrambled.translate(key)))
+    segments = fset(key[s] for s in segments_scrambled)
     return _digit[segments]
 
 
