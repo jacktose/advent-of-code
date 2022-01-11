@@ -8,15 +8,14 @@ Day 8: Seven Segment Search
 import sys
 
 def main():
+    ex1_data = get_input('./example1')
+    ex2_data = get_input('./example2')
+    data = get_input()
+
     print('example 1:')
-    ex1_data = [( ('acedgfb', 'cdfbe', 'gcdfa', 'fbcad', 'dab',
-                   'cefabd', 'cdfgeb', 'eafb', 'cagedb', 'ab'),
-                  ('cdfeb', 'fcadb', 'cdfeb', 'cdbaf') )]
-    ex2_data = get_input('./example')
     print(part_1(ex2_data))
     
     print('\npart 1:')
-    data = get_input()
     print(part_1(data))
     
     print('\nexample 2.1:')
@@ -78,7 +77,7 @@ def key_from_sigs(signals):
     e    f
      gggg 
     '''
-    patterns = [set(p) for p in signals]
+    patterns = (set(p) for p in signals)
     digits = {}
     digits[235] = []
     digits[690] = []
@@ -113,8 +112,7 @@ def key_from_sigs(signals):
     segs['f'] = segs['cf'] - segs['c']
     segs['g'] = segs['adg'] - segs['a'] - segs['d']
     
-    segs = {s: segs[s].pop() for s in 'abcdefg'}
-    segtrans = {v:k for k,v in segs.items()}
+    segtrans = {segs[s].pop(): s for s in 'abcdefg'}
     return str.maketrans(segtrans)
 
 _digit = {
