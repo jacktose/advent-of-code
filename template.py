@@ -8,10 +8,21 @@ https://adventofcode.com/2021/day/_
 import sys
 
 def main():
-    data = get_input()
-    print(part_1(data))
+    ex_data = get_input('./example')
+    data = get_input('./input')
+    
+    print('example 1:')
+    print(part_1(ex_data))
+    
+    #print('\npart 1:')
+    #print(part_1(data))
+    
+    #print('\nexample 2:')
+    #print(part_2(ex_data))
+    
+    #print('\npart 2:')
     #print(part_2(data))
-    breakpoint()
+    #breakpoint()
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
@@ -20,11 +31,9 @@ def get_input(file='./input'):
 
 def part_1(data):
     '''assignment'''
-    print('part 1:')
 
 def part_2(data):
     '''assignment'''
-    print('part 2:')
 
 
 if __name__ == '__main__':
