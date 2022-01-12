@@ -6,23 +6,23 @@ Day 9: Smoke Basin
 """
 
 import sys
+import math
 
 def main():
     ex_data = get_input('./example')
     data = get_input()
-
+    
     print('example 1:')
-    print(part_1(ex_data, debug=True))
-
+    print(part_1(ex_data, debug=True), '= 15?')
+    
     print('\npart 1:')
-    print(part_1(data))
-
-    #print('\nexample 2:')
-    #print(part_2(ex_data, debug=True))
-
-    #print('\npart 2:')
-    #print(part_2(data))
-    #breakpoint()
+    print(part_1(data), '= 524?')
+    
+    print('\nexample 2:')
+    print(part_2(ex_data, debug=True), '= 1134?')
+    
+    print('\npart 2:')
+    print(part_2(data, debug=True))
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
@@ -32,11 +32,21 @@ def get_input(file='./input'):
 def part_1(data, debug=False):
     '''What is the sum of the risk levels of all low points on your heightmap?'''
     floor = Map(data)
-    if debug: print(list(floor.low_points()))
+    if debug: print('low points:', list(floor.low_points()))
     return floor.risk()
 
+def part_2(data, debug=False):
+    '''What do you get if you multiply together the sizes of the three largest basins?'''
+    floor = Map(data)
+    if debug:
+        basins = list(floor.basins())
+        print('basin sizes:', basins)
+        print('largest 3:', sorted(basins)[-3:])
+    basins = floor.basins()
+    return math.prod(sorted(basins)[-3:])
+
 class Map:
-    ''''''
+    '''2D array of seafloor, with puzzling funcs'''
     def __init__(self, points):
         self.points = points  # 2D array as tuple of tuples of ints
         self.height = len(self.points)
@@ -47,21 +57,40 @@ class Map:
         for row in range(self.height):
             for col in range(self.width):
                 if self._is_low_point(row, col):
-                    yield ((row, col), self.points[row][col])
+                    yield (row, col, self.points[row][col])
     
     def _is_low_point(self, row, col):
-        p = self.points[row][col]
-        if (
-                (row == 0             or p < self.points[row-1][col])  # north
-            and (row == self.height-1 or p < self.points[row+1][col])  # south
-            and (col == 0             or p < self.points[row][col-1])  # west
-            and (col == self.width-1  or p < self.points[row][col+1])  # east
-        ):
-            return True
+        '''is it lower than all 2–4 orthogonal neighbors?'''
+        return all(self.points[row][col] < a[2] for a in self.adj(row, col))
+    
+    def adj(self, row, col):
+        '''generator of orthogonal neighbors'''
+        for r, c in ((row-1, col),  # north
+                     (row+1, col),  # south
+                     (row, col-1),  # west
+                     (row, col+1)): # east
+            if (0 <= r < self.height) and (0 <= c < self.width):
+                yield (r, c, self.points[r][c])
     
     def risk(self):
         '''The risk level of a low point is 1 plus its height.'''
-        return sum(p[1]+1 for p in self.low_points())
+        return sum(p[2]+1 for p in self.low_points())
+    
+    def basins(self):
+        '''generator of sizes of basins'''
+        for low_point in self.low_points():
+            yield self._basin_size(low_point)
+    
+    def _basin_size(self, initial_point: tuple):
+        '''given a (low?) point, count the points in its basin'''
+        basin_maybe = {initial_point}
+        basin_yes = set()
+        while basin_maybe:
+            p = basin_maybe.pop()
+            if p[2] < 9:  # 9s are basin borders and not included
+                basin_yes.add(p)
+                basin_maybe.update(p for p in self.adj(p[0], p[1]) if p not in basin_yes)
+        return len(basin_yes)
 
 
 if __name__ == '__main__':
