@@ -6,9 +6,8 @@ Day 11: Dumbo Octopus
 """
 
 import sys
-import itertools
 from collections.abc import Generator, Iterable
-import blessings
+import blessings  # type: ignore
 t = blessings.Terminal()
 
 def main():
@@ -17,42 +16,41 @@ def main():
     #print(part_1(demo_data, steps=2, debug=True), '= 9?\n')
     
     print('example 1:')
-    ex_data = get_input('./example')
-    print(part_1(ex_data, debug=False), '= 1656?')
+    print(part_1('./example', debug=True), '= 1656?')
     
     print('\npart 1:')
-    data = get_input('./input')
-    print(part_1(data))
+    print(t.underline(str(part_1('./input'))), 'flashes')
     
     print('\nexample 2:')
-    ex_data = get_input('./example')
-    print(part_2(ex_data, debug=False), '= 195?')
+    print(part_2('./example', debug=False), '= 195?')
     
     print('\npart 2:')
-    data = get_input('./input')
-    print(part_2(data))
+    print(t.underline(str(part_2('./input'))), 'steps to sync')
     #breakpoint()
+
+def part_1(input_file: str = './input', steps: int = 100, debug=False):
+    '''How many total flashes are there after 100 steps?'''
+    data: Iterable[Iterable[int]] = get_input(input_file)
+    octos: Octopodes = Octopodes(data)
+    octos.step(100, debug=debug)
+    return octos.flashes
+
+def part_2(input_file: str = './input', debug=False):
+    '''What is the first step during which all octopuses flash?'''
+    data: Iterable[Iterable[int]] = get_input(input_file)
+    octos: Octopodes = Octopodes(data)
+    step, _ = octos.step(1_000_000, stop_when_synced=True, debug=debug)
+    return step
 
 def get_input(file: str ='./input'):
     with open(file, 'r') as f:
         data: list[list[int]] = [[int(n) for n in line] for line in f.read().splitlines()]
     return data
 
-def part_1(data: Iterable[Iterable[int]], steps: int = 100, debug=False):
-    '''How many total flashes are there after 100 steps?'''
-    octos: Octopodes = Octopodes(data)
-    octos.step(100, debug=debug)
-    return octos.flashes
-
-def part_2(data: Iterable[Iterable[int]], debug=False):
-    '''What is the first step during which all octopuses flash?'''
-    octos: Octopodes = Octopodes(data)
-    step, _ = octos.step(1_000_000, stop_when_synced=True, debug=debug)
-    return step
-
 class Octopodes:
+    '''A grid of dumbo “octopuses” and their flashy functions'''
     def __init__(self, grid: Iterable[Iterable[int]]) -> None:
-        self.grid: list[list[int]] = grid
+        self.grid: list[list[int]] = [list(row) for row in grid]
         self.height: int = len(self.grid)
         self.width: int = len(self.grid[0])
         self.flashes: int = 0
@@ -61,24 +59,20 @@ class Octopodes:
         return f'Octopodes({repr(self.grid)})'
     
     def __str__(self) -> str:
-        out: str = ''
-        for row in self.grid:
-            for o in row:
-                if o == 0:
-                    out += t.blink(t.bold(str(o)))
-                else:
-                    out += str(o)
-                out += ' '
-            out = out.rstrip()
-            out += '\n'
-        return out.rstrip()
+        return '\n'.join(
+            ' '.join(
+                t.blink(t.bold(str(o))) if o == 0
+                else str(o)
+                for o in row
+            ) for row in self.grid
+        )
     
-    def step(self, n: int = 1, stop_when_synced=False, debug=False) -> int:
-        ''''''
+    def step(self, n: int = 1, stop_when_synced: bool = False, debug: bool = False) -> tuple[int, int]:
+        '''Increment octopus energies and count flashes'''
         flashes: int = 0
         if debug:
-            print('Before any steps:', self, '', sep='\n')
-            input()
+            print('Before any steps:', self, sep='\n')
+            debug = wait(debug)
         
         for step in range(n):
             # First, the energy level of each octopus increases by 1:
@@ -97,8 +91,8 @@ class Octopodes:
                     flashes += 1
              
             if debug and (step+1 <= 10 or (step+1) % 10 == 0):
-                print(f'After step {step+1}:', self, f'{self.flashes} flashes', '', sep='\n')
-                input()
+                print(f'After step {step+1}:', self, f'{self.flashes} flashes', sep='\n')
+                debug = wait(debug)
             
             if stop_when_synced and self.synced:
                 if debug: print(self)
@@ -107,21 +101,22 @@ class Octopodes:
         return step+1, flashes
     
     def coords(self) -> Generator[tuple[int, int, int], None, None]:
+        '''Generate tuples of all coordinates in grid'''
         for row in range(self.height):
             for col in range(self.width):
                 yield row, col, self.grid[row][col]
     
     def neighbors(self, row: int, col: int) -> Generator[tuple[int, int], None, None]:
-        '''All 9 grid neighbors, including input because it doesn't matter'''
+        '''All 8 grid neighbors, excluding self and out-of-bounds'''
         for r in (r for r in (row-1, row, row+1) if r >= 0 and r < self.height):
             for c in (c for c in (col-1, col, col+1) if c >= 0 and c < self.width):
                 if r == row and c == col:
                     continue
                 else:
-                    yield (r, c)
+                    yield r, c
     
     def flash(self, row: int, col: int) -> None:
-        ''''''
+        '''Flash octopus at given coords, check neighbors and flash (recursively) as required'''
         if self.grid[row][col] < 10:
             return
         self.flashes += 1
@@ -135,13 +130,22 @@ class Octopodes:
         for nrow, ncol in self.neighbors(row, col):
             if self.grid[nrow][ncol] >= 10:
                 self.flash(nrow, ncol)
-                # This process continues as long as new octopuses keep having their energy level increased beyond 9.
+                # This process continues [recursively] as long as new octopuses keep having their energy level increased beyond 9.
     
     @property
     def synced(self) -> bool:
         '''Did all octopodes just flash?'''
-        return all(o == 0 for o in itertools.chain.from_iterable(self.grid))
+        #return all(o == 0 for o in itertools.chain.from_iterable(self.grid))  # 800 nsec
+        return all(all(o == 0 for o in row) for row in self.grid)  # 1000 nsec
 
+def wait(debug: bool = True) -> bool:
+    '''Wait for keyboard input. If Ctrl-C or Ctrl-D, turn off debug and continue.'''
+    try:
+        input()
+    except (KeyboardInterrupt, EOFError):
+        print()
+        return False  # turn off debug
+    return debug
 
 if __name__ == '__main__':
     sys.exit(main())
