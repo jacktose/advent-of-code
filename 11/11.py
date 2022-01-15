@@ -6,56 +6,52 @@ Day 11: Dumbo Octopus
 """
 
 import sys
-from collections.abc import Generator
+import itertools
+from collections.abc import Generator, Iterable
 import blessings
 t = blessings.Terminal()
 
 def main():
-    demo_data = get_input('./demo')
-    ex_data = get_input('./example')
-    data = get_input('./input')
-    
     #print('example 0:')
+    #demo_data = get_input('./demo')
     #print(part_1(demo_data, steps=2, debug=True), '= 9?\n')
     
     print('example 1:')
+    ex_data = get_input('./example')
     print(part_1(ex_data, debug=False), '= 1656?')
     
     print('\npart 1:')
+    data = get_input('./input')
     print(part_1(data))
     
-    #print('\nexample 2:')
-    #print(part_2(ex_data))
+    print('\nexample 2:')
+    ex_data = get_input('./example')
+    print(part_2(ex_data, debug=False), '= 195?')
     
-    #print('\npart 2:')
-    #print(part_2(data))
+    print('\npart 2:')
+    data = get_input('./input')
+    print(part_2(data))
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file: str ='./input'):
     with open(file, 'r') as f:
-        data = [[int(n) for n in line] for line in f.read().splitlines()]
+        data: list[list[int]] = [[int(n) for n in line] for line in f.read().splitlines()]
     return data
 
-def part_1(data: list[list[int]], steps: int = 100, debug=False):
+def part_1(data: Iterable[Iterable[int]], steps: int = 100, debug=False):
     '''How many total flashes are there after 100 steps?'''
     octos: Octopodes = Octopodes(data)
-    if debug:
-        print('Before any steps:', octos, sep='\n')
-        input()
-        for step in range(steps):
-            step_flashes = octos.step(1)
-            if step+1 <= 10 or (step+1) % 10 == 0:
-                print(f'After step {step+1}:', octos, f'{octos.flashes} flashes', sep='\n')
-                input()
-    else:
-        octos.step(100)
+    octos.step(100, debug=debug)
     return octos.flashes
 
-def part_2(data):
-    '''assignment'''
+def part_2(data: Iterable[Iterable[int]], debug=False):
+    '''What is the first step during which all octopuses flash?'''
+    octos: Octopodes = Octopodes(data)
+    step, _ = octos.step(1_000_000, stop_when_synced=True, debug=debug)
+    return step
 
 class Octopodes:
-    def __init__(self, grid: list[list[int]]) -> None:
+    def __init__(self, grid: Iterable[Iterable[int]]) -> None:
         self.grid: list[list[int]] = grid
         self.height: int = len(self.grid)
         self.width: int = len(self.grid[0])
@@ -77,9 +73,14 @@ class Octopodes:
             out += '\n'
         return out.rstrip()
     
-    def step(self, n: int = 1) -> int:
+    def step(self, n: int = 1, stop_when_synced=False, debug=False) -> int:
         ''''''
-        for _ in range(n):
+        flashes: int = 0
+        if debug:
+            print('Before any steps:', self, '', sep='\n')
+            input()
+        
+        for step in range(n):
             # First, the energy level of each octopus increases by 1:
             for row, col, _ in self.coords():
                 self.grid[row][col] += 1
@@ -93,8 +94,17 @@ class Octopodes:
             for row, col, energy in self.coords():
                 if energy < 0:
                     self.grid[row][col] = 0
+                    flashes += 1
+             
+            if debug and (step+1 <= 10 or (step+1) % 10 == 0):
+                print(f'After step {step+1}:', self, f'{self.flashes} flashes', '', sep='\n')
+                input()
+            
+            if stop_when_synced and self.synced:
+                if debug: print(self)
+                break
         
-        return self.flashes
+        return step+1, flashes
     
     def coords(self) -> Generator[tuple[int, int, int], None, None]:
         for row in range(self.height):
@@ -126,6 +136,11 @@ class Octopodes:
             if self.grid[nrow][ncol] >= 10:
                 self.flash(nrow, ncol)
                 # This process continues as long as new octopuses keep having their energy level increased beyond 9.
+    
+    @property
+    def synced(self) -> bool:
+        '''Did all octopodes just flash?'''
+        return all(o == 0 for o in itertools.chain.from_iterable(self.grid))
 
 
 if __name__ == '__main__':
