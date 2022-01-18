@@ -22,7 +22,7 @@ def main():
     print(part_2(ex_dots, ex_folds, debug=True))
     
     print('\npart 2:')
-    print(part_2(dots, folds, debug=True))
+    print(part_2(dots, folds))
     #breakpoint()
 
 def get_input(file='./input'):
@@ -58,31 +58,28 @@ def fold(dots, folds, debug=False):
             if getattr(dot, fold.axis) < fold.dim:  # not beyond the fold
                 new_dots.add(dot)
             else:  # beyond the fold
-                if fold.axis == 'x':  # figure out how to do this once for either
-                    new_x = 2*fold.dim - dot.x
-                    new_dots.add(Dot(new_x, dot.y))
-                elif fold.axis == 'y':
-                    new_y = 2*fold.dim - dot.y
-                    new_dots.add(Dot(dot.x, new_y))
+                new_val = 2*fold.dim - getattr(dot, fold.axis)
+                new_dots.add(dot._replace(**{fold.axis: new_val}))
         dots = new_dots
     return tuple(new_dots)
 
 def dot_string(dots, fold=None):
     DOT = '⬤'
     NO_DOT = '·'
-    FOLD = fold.axis.translate({ord("x"): "|", ord("y"): "-"}) if fold else None
-    max_x, max_y = (max(i) for i in zip(*dots))
-    out = ''
-    for y in range(max_y+1):
-        for x in range(max_x+1):
-            if Dot(x, y) in dots:
-                out += DOT
-            elif fold and eval(fold.axis) == fold.dim:
-                out += FOLD
-            else:
-                out += NO_DOT
-        out += '\n'
-    return out.rstrip()
+    len_x, len_y = (max(i)+1 for i in zip(*dots))
+    # initialize 2D list of no dots:
+    grid = [[NO_DOT] * len_x for row in range(len_y)]
+    # overwrite with fold characters:
+    if fold and fold.axis == 'x':
+        for row in grid:
+            row[fold.dim] = '|'
+    elif fold and fold.axis == 'y':
+        grid[fold.dim] = ['-'] * (len_x)
+    # overwrite with dots:
+    for dot in dots:
+        grid[dot.y][dot.x] = DOT
+    return '\n'.join(''.join(row) for row in grid)
+
 
 if __name__ == '__main__':
     sys.exit(main())
