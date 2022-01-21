@@ -8,45 +8,50 @@ Day 14: Extended Polymerization
 import sys
 from collections import Counter
 from itertools import pairwise
-from functools import reduce
 
 def main():
     ex_template, ex_insertions = get_input('./example')
     template, insertions = get_input('./input')
     
     print('example 1:')
-    print(part_1(ex_template, ex_insertions, steps=10, debug=True))
+    print(polymerize(ex_template, ex_insertions, steps=10, debug=True), '= 1588?')
     
     print('\npart 1:')
-    print(part_1(template, insertions, steps=10, debug=False))
+    print(polymerize(template, insertions, steps=10, debug=False), '= 2408?')
     
-    #print('\nexample 2:')
-    #print(part_2(ex_data))
+    print('\nexample 2:')
+    print(polymerize(ex_template, ex_insertions, steps=40, debug=True), '= 2188189693529?')
     
-    #print('\npart 2:')
-    #print(part_2(data))
+    print('\npart 2:')
+    print(polymerize(template, insertions, steps=40, debug=False))
     #breakpoint()
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
         template = f.readline().rstrip()
         _ = f.readline()
-        insertions = dict((line.rstrip().split(' -> ')) for line in f)
+        #insertions = dict((line.rstrip().split(' -> ')) for line in f)
+        insertions = {(line[0], line[1]): line[6] for line in f}
     return template, insertions
 
-def part_1(template, insertions, steps=10, debug=False):
+def polymerize(template, insertions, steps=1, debug=False):
     '''What do you get if you take the quantity of the most common element and subtract the quantity of the least common element?'''
-    if debug: print('Template:    ', template)
+    pairs = Counter(pairwise(template))
     for step in range(steps):
-        polymer = reduce(lambda a,b: a+insertions[a[-1]+b]+b, template)
-        if debug: print(f'After step {step+1}:', polymer)
-        template = polymer
-    c = Counter(polymer)
-    if debug: print(f'{c.most_common()[0] =}\n{c.most_common()[-1] =}')
-    return c.most_common()[0][1] - c.most_common()[-1][1]
+        for pair, n in pairs.copy().items():
+            pairs[pair] -= n
+            pairs.update({(pair[0], insertions[pair]): n,
+                          (insertions[pair], pair[1]): n,})
 
-def part_2(data):
-    '''assignment'''
+    chars = Counter(template[0])
+    for pair, n in pairs.items():
+        chars.update({pair[1]: n})
+
+    if debug:
+        print(chars)
+        print('polymer length:', chars.total())
+        print(f'{chars.most_common()[0] = }\n{chars.most_common()[-1] = }')
+    return chars.most_common()[0][1] - chars.most_common()[-1][1]
 
 
 if __name__ == '__main__':
