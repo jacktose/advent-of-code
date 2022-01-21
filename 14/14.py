@@ -24,33 +24,31 @@ def main():
     
     print('\npart 2:')
     print(polymerize(template, insertions, steps=40, debug=False))
-    #breakpoint()
+    # 0.003910795999981929 s/loop
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
         template = f.readline().rstrip()
-        _ = f.readline()
-        #insertions = dict((line.rstrip().split(' -> ')) for line in f)
-        insertions = {(line[0], line[1]): line[6] for line in f}
+        f.readline()
+        insertions = {line[0:2]: line[6] for line in f}
     return template, insertions
 
 def polymerize(template, insertions, steps=1, debug=False):
     '''What do you get if you take the quantity of the most common element and subtract the quantity of the least common element?'''
-    pairs = Counter(pairwise(template))
+    pairs = Counter(template[i:i+2] for i in range(len(template)-1))
     for step in range(steps):
         for pair, n in pairs.copy().items():
             pairs[pair] -= n
-            pairs.update({(pair[0], insertions[pair]): n,
-                          (insertions[pair], pair[1]): n,})
+            pairs[pair[0] + insertions[pair]] += n
+            pairs[insertions[pair] + pair[1]] += n
 
     chars = Counter(template[0])
     for pair, n in pairs.items():
         chars.update({pair[1]: n})
 
     if debug:
-        print(chars)
         print('polymer length:', chars.total())
-        print(f'{chars.most_common()[0] = }\n{chars.most_common()[-1] = }')
+        print(dict(chars.most_common()))
     return chars.most_common()[0][1] - chars.most_common()[-1][1]
 
 
