@@ -1,4 +1,4 @@
 #!/bin/bash
 mkdir -p "./${1}" && \
-cp -i --no-preserve=mode,timestamps ./template.py "./${1}/${1}.py" && \
+cp -i --no-preserve=mode,timestamps ../template.py "./${1}/${1}.py" && \
 chmod 755 "./${1}/${1}.py" 
