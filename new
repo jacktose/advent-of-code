@@ -1,4 +1,24 @@
 #!/bin/bash
-mkdir -p "./${1}" && \
-cp -i --no-preserve=mode,timestamps ../template.py "./${1}/${1}.py" && \
-chmod 755 "./${1}/${1}.py" 
+YEAR=${PWD##*/}
+[[ $YEAR =~ 20[[:digit:]][[:digit:]] ]] || { echo "Run from year directory." >&2; exit 2; }
+DAY=${1}
+[[ $DAY =~ [[:digit:]]?[[:digit:]] && 0 -lt "$DAY" && "$DAY" -lt 32 ]] || {
+    echo "You have a bad day: $DAY" >&2; exit 2; }
+SCRIPTDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd )
+
+mkdir -p "./${DAY}" || { echo "Could not make directory: ./${DAY}" >&2; exit 3; }
+cp -i --no-preserve=mode,timestamps "${SCRIPTDIR}/template.py" "./${DAY}/${DAY}.py" && \
+chmod 755 "./${DAY}/${DAY}.py" 
+
+COOKIE=$(<"${SCRIPTDIR}/.session_cookie") && \
+tempfile=$(mktemp) && \
+curl --silent --fail \
+    --cookie "$COOKIE" \
+    --user-agent 'https://github.com/jacktose/advent-of-code by jacktose' \
+    "https://adventofcode.com/${YEAR}/day/${DAY}/input" \
+> "$tempfile" && \
+mv "$tempfile" "./${DAY}/input" && \
+chmod 444 "./${DAY}/input"
+rm -f "$tempfile"
+
+exit 0
