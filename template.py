@@ -5,23 +5,22 @@ https://adventofcode.com/2021/day/_
 
 """
 
-import sys
-
 def main():
     ex_data = get_input('./example')
     data = get_input('./input')
     
     print('example 1:')
-    print(part_1(ex_data))
+    print(part_1(ex_data), '= _?')
     
     #print('\npart 1:')
     #print(part_1(data))
     
     #print('\nexample 2:')
-    #print(part_2(ex_data))
+    #print(part_2(ex_data), '= _?')
     
     #print('\npart 2:')
     #print(part_2(data))
+
     #breakpoint()
 
 def get_input(file='./input'):
@@ -37,5 +36,6 @@ def part_2(data):
 
 
 if __name__ == '__main__':
+    import sys
     sys.exit(main())
 
