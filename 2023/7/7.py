@@ -7,6 +7,7 @@ Day 7: Camel Cards
 
 from collections import Counter
 from dataclasses import dataclass
+from functools import cached_property
 #from timeit import timeit
 from typing import ClassVar
 
@@ -33,12 +34,33 @@ class Hand:
     def __post_init__(self):
         self.bid: int = int(self.bid)
         if self.joker:
-            #TODO: change type sigs?
             self._card_val['J'] = 1
+        
 
     @property
+    def _effective_cards(self) -> str:
+        if not self.joker or 'J' not in self.cards:
+            return self.cards
+        if self.cards == 'JJJJJ':
+            return self.cards
+        c = Counter(self.cards)
+        target = c.most_common(1)[0][0]
+        if target == 'J':
+            target = c.most_common(2)[1][0]
+        return self.cards.replace('J', target)
+    @property
     def counter(self) -> Counter:
-        return Counter(self.cards)    
+        return Counter(self._effective_cards)
+        #c = Counter(self.cards)    
+        #if self.joker:
+        #    if self.cards == 'JJJJJ':
+        #        return c
+        #    target = c.most_common(1)[0][0]
+        #    if target == 'J':
+        #        target = c.most_common(2)[1][0]
+        #    c[target] += c['J']
+        #    del c['J']
+        #return c
     @property
     def signature(self) -> tuple[int, ...]:
         return tuple(sorted(self.counter.values()))
@@ -48,7 +70,7 @@ class Hand:
     @property
     def card_values(self) -> tuple[int, int, int, int, int]:
         return tuple(self._card_val[c] for c in self.cards) # type: ignore
-    @property
+    @cached_property
     def sort_key(self) -> tuple[int, tuple[int, int, int, int, int]]:
         return (self.type_score, self.card_values)
     def __lt__(self, other) -> bool:
@@ -75,11 +97,11 @@ def main():
     print('\npart 1:')
     print(part_1(data))
     
-    #print('\nexample 2:')
-    #print(part_2(ex_data), '= 5905?')
+    print('\nexample 2:')
+    print(part_2(ex_data), '= 5905?')
     
-    #print('\npart 2:')
-    #print(part_2(data))
+    print('\npart 2:')
+    print(part_2(data))
 
     #breakpoint()
 
@@ -91,11 +113,14 @@ def get_input(file='./input'):
 def part_1(data) -> int:
     '''Find the rank of every hand in your set. What are the total winnings?'''
     hands = [Hand(*h) for h in data]
+    #print(timeit('hands.sort()', globals=locals(), number=10_000))
     return winnings(hands)
 
 def part_2(data) -> int:
     '''Using the new joker rule, find the rank of every hand in your set.
     What are the new total winnings?'''
+    hands = [Hand(*h, joker=True) for h in data]
+    return winnings(hands)
 
 def winnings(hands: list[Hand]) -> int:
     hands.sort()
