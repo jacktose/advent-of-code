@@ -7,14 +7,12 @@ Day 7: Camel Cards
 
 from collections import Counter
 from dataclasses import dataclass
-from functools import cached_property
-#from timeit import timeit
-from typing import ClassVar
+from typing import ClassVar, Iterable
 
 @dataclass
 class Hand:
     cards: str
-    bid: int | str
+    bid: int
     joker: bool = False
 
     _hand_score: ClassVar[dict[tuple[int, ...], int]] = {
@@ -32,59 +30,37 @@ class Hand:
     }
 
     def __post_init__(self):
-        self.bid: int = int(self.bid)
-        if self.joker:
-            self._card_val['J'] = 1
-        
+        self.effective_cards: str
+        self.counter: Counter
+        self._signature: tuple[int, ...]
+        self._type_score: int
+        self._card_values: tuple[int, int, int, int, int]
+        self._sort_key: tuple[int, tuple[int, int, int, int, int]]
 
-    @property
-    def _effective_cards(self) -> str:
-        if not self.joker or 'J' not in self.cards:
-            return self.cards
-        if self.cards == 'JJJJJ':
-            return self.cards
-        c = Counter(self.cards)
-        target = c.most_common(1)[0][0]
-        if target == 'J':
-            target = c.most_common(2)[1][0]
-        return self.cards.replace('J', target)
-    @property
-    def counter(self) -> Counter:
-        return Counter(self._effective_cards)
-        #c = Counter(self.cards)    
-        #if self.joker:
-        #    if self.cards == 'JJJJJ':
-        #        return c
-        #    target = c.most_common(1)[0][0]
-        #    if target == 'J':
-        #        target = c.most_common(2)[1][0]
-        #    c[target] += c['J']
-        #    del c['J']
-        #return c
-    @property
-    def signature(self) -> tuple[int, ...]:
-        return tuple(sorted(self.counter.values()))
-    @property
-    def type_score(self) -> int:
-        return self._hand_score[self.signature]
-    @property
-    def card_values(self) -> tuple[int, int, int, int, int]:
-        return tuple(self._card_val[c] for c in self.cards) # type: ignore
-    @cached_property
-    def sort_key(self) -> tuple[int, tuple[int, int, int, int, int]]:
-        return (self.type_score, self.card_values)
+        if not self.joker or 'J' not in self.cards or self.cards == 'JJJJJ':
+            self.effective_cards = self.cards
+        else:
+            # Demote 'J' from 11 to 1 (lowest)
+            self._card_val['J'] = 1
+            # Determine effective hand by adding jokers to modal (other) card
+            common = Counter(self.cards).most_common(2)
+            target = common[1][0] if common[0][0] == 'J' else common[0][0]
+            self.effective_cards = self.cards.replace('J', target)
+
+        self.counter = Counter(self.effective_cards)
+        self._signature = tuple(sorted(self.counter.values()))
+        self._type_score = self._hand_score[self._signature]
+        self._card_values = tuple(self._card_val[c] for c in self.cards)  # type: ignore
+        self._sort_key = (self._type_score, self._card_values)  # type: ignore
+
     def __lt__(self, other) -> bool:
-        return self.sort_key < other.sort_key
+        return self._sort_key < other._sort_key
     def __le__(self, other) -> bool:
-        return self.sort_key <= other.sort_key
-    def __eq__(self, other) -> bool:
-        return self.sort_key == other.sort_key
-    def __ne__(self, other) -> bool:
-        return self.sort_key != other.sort_key
+        return self._sort_key <= other._sort_key
     def __gt__(self, other) -> bool:
-        return self.sort_key > other.sort_key
+        return self._sort_key > other._sort_key
     def __ge__(self, other) -> bool:
-        return self.sort_key >= other.sort_key
+        return self._sort_key >= other._sort_key
     
 
 def main():
@@ -110,13 +86,12 @@ def get_input(file='./input'):
         data = [(line[:5], int(line[6:-1])) for line in f]
     return data
 
-def part_1(data) -> int:
+def part_1(data: Iterable[tuple[str, int]]) -> int:
     '''Find the rank of every hand in your set. What are the total winnings?'''
     hands = [Hand(*h) for h in data]
-    #print(timeit('hands.sort()', globals=locals(), number=10_000))
     return winnings(hands)
 
-def part_2(data) -> int:
+def part_2(data: Iterable[tuple[str, int]]) -> int:
     '''Using the new joker rule, find the rank of every hand in your set.
     What are the new total winnings?'''
     hands = [Hand(*h, joker=True) for h in data]
@@ -124,7 +99,6 @@ def part_2(data) -> int:
 
 def winnings(hands: list[Hand]) -> int:
     hands.sort()
-    #print(*((h, s, c) for h, _, _, _, s, c in data), sep='\n')
     return sum(hand.bid * (i+1) for i, hand in enumerate(hands))
 
 
