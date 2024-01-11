@@ -21,8 +21,6 @@ def main():
     #print('\npart 2:')
     #print(part_2(data))
 
-    #breakpoint()
-
 def get_input(file='./input'):
     with open(file, 'r') as f:
         data = f.read().splitlines()
