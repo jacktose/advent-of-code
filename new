@@ -19,6 +19,7 @@ curl --silent --fail \
 > "$tempfile" && \
 mv "$tempfile" "./${DAY}/input" && \
 chmod 444 "./${DAY}/input"
+touch "./${DAY}/example"
 rm -f "$tempfile"
 
 exit 0
