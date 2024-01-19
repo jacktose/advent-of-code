@@ -5,6 +5,9 @@ https://adventofcode.com/2021/day/13
 Day 13: Point of Incidence
 """
 
+from itertools import pairwise
+
+
 def main():
     ex_data = get_input('./example')
     data = get_input('./input')
@@ -15,27 +18,27 @@ def main():
     print('\npart 1:')
     print(part_1(data))
     
-    #print('\nexample 2:')
-    #print(part_2(ex_data), '= _?')
+    print('\nexample 2:')
+    print(part_2(ex_data, debug=True), '= 400?')
     
-    #print('\npart 2:')
-    #print(part_2(data))
+    print('\npart 2:')
+    print(part_2(data))
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
         data = tuple(tuple(p.splitlines()) for p in f.read().split('\n\n'))
     return data
 
-def part_1(data, debug=False):
+def part_1(data, smudge_target=0, debug=False):
     '''Find the line of reflection in each of the patterns in your notes.
     What number do you get after summarizing all of your notes?'''
     tops = []; lefts = []
     for i, pattern in enumerate(data):
         if debug: print(f'{i}:')
-        if top := find_mirror(pattern):
+        if top := find_mirror(pattern, smudge_target=0):
             if debug: print_w_horiz(pattern, top)
             tops.append(top)
-        elif left := find_mirror(transpose(pattern)):
+        elif left := find_mirror(transpose(pattern), smudge_target=0):
             if debug: print_w_vert(pattern, left)
             lefts.append(left)
         else:
@@ -43,20 +46,29 @@ def part_1(data, debug=False):
         if debug: print()
     return (100 * sum(tops)) + sum(lefts)
 
-def part_2(data):
-    '''assignment'''
+def part_2(data, debug=False):
+    '''In each pattern, fix the smudge and find the different line of reflection.
+    What number do you get after summarizing the new
+    reflection line in each pattern in your notes?'''
+    return part_1(data, smudge_target=1, debug=debug)
 
 def transpose(grid):
     return tuple(''.join(c) for c in zip(*grid))
 
-def find_mirror(pattern):
-    for i in range(1, len(pattern), 2):
-        if pattern[i] == pattern[0] and pattern[:i+1] == pattern[i::-1]:
-            return (i // 2) + 1
-    for i in range(len(pattern)-2, 0, -2):
-        if pattern[i] == pattern[-1] and pattern[i:] == pattern[:i-1:-1]:
-            return ((i+len(pattern)-1) // 2) + 1
+def find_mirror(pattern, smudge_target=1):
+    for i, j in pairwise(range(len(pattern))):
+        smudged = 0
+        a = i+1; b = j-1
+        while (smudged <= smudge_target
+               and (a := a-1) >= 0
+               and (b := b+1) < len(pattern)):
+            smudged += differences(pattern[a], pattern[b])
+        if smudged == smudge_target:
+            return i + 1
     return None
+
+def differences(line1, line2) -> int:
+    return sum(x != y for (x, y) in zip(line1, line2))
 
 def print_w_horiz(pattern, mirror):
     start = max(0, (2 * mirror) - len(pattern)) + 1
