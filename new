@@ -18,7 +18,8 @@ curl --silent --fail \
     "https://adventofcode.com/${YEAR}/day/${DAY}/input" \
 > "$tempfile" && \
 mv "$tempfile" "./${DAY}/input" && \
-chmod 444 "./${DAY}/input"
+chmod 444 "./${DAY}/input" || \
+echo "Could not download input" >&2
 touch "./${DAY}/example"
 rm -f "$tempfile"
 
