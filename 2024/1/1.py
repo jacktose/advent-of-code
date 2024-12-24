@@ -35,7 +35,7 @@ def part_1(data):
     return sum(abs(a-b) for (a, b) in zip(*data))
     
 def part_2(data):
-    '''assignment'''
+    '''Once again consider your left and right lists. What is their similarity score?'''
     r_counts = Counter(data[1])
     return sum(n * r_counts[n] for n in data[0])
 
