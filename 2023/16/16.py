@@ -139,7 +139,7 @@ class Velocity(NamedTuple):
             case 0, -1: return Direction.W
             case 1, 0: return Direction.S
             case 0, 1: return Direction.E
-        raise NotImplemented('Cardinal directions only')
+        raise NotImplementedError('Cardinal directions only')
 
     def reflected(self, tile: str) -> Velocity:
         match tile:
@@ -181,7 +181,7 @@ class Beam:
             case (1, 0): return 'v'
             case (0, -1): return '<'
             case (-1, 0): return '^'
-        raise RuntimeError('Unexpected velocity: {self.vel}')
+        raise RuntimeError(f'Unexpected velocity: {self.vel}')
 
     @property
     def direction(self) -> Direction:
