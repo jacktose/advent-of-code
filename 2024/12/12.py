@@ -12,7 +12,7 @@ from typing import Any
 import sys 
 import os
 sys.path.append(os.path.abspath('../../util'))
-from Grid import Grid
+from Grid import Grid_Immutable as Grid
 
 
 def main():
