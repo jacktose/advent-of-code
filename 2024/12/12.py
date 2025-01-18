@@ -49,7 +49,7 @@ def main():
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
-        data: Grid[str] = Grid.from_string(f.read())
+        data: Grid[str] = Grid(f.read())
     return data
 
 def part_1(data: Grid[Any]) -> int:

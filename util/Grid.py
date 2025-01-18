@@ -3,7 +3,8 @@ Classes & functions for representing and working with a 2D grid.
 """
 
 from __future__ import annotations
-from collections.abc import Callable, Generator, Mapping, Sequence
+from abc import ABC
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 import enum
 from functools import singledispatchmethod
 from typing import NamedTuple
@@ -42,7 +43,12 @@ class Direction(enum.Flag):
             Direction.S: 'v',
             Direction.E: '>',
         }[self]
+    character = arrow
     
+    @property
+    def unit_velocity(self) -> Velocity:
+        return self.velocity(speed=1)
+
     def velocity(self, speed: int = 1) -> Velocity:
         return {
             Direction.N: Velocity(-speed, 0),
@@ -52,11 +58,12 @@ class Direction(enum.Flag):
         }[self]
     
     def cross(self, other: Direction) -> int:
-        return self.velocity(speed=1).cross(other.velocity(speed=1))
+        '''Cross product of two direction vectors'''
+        return self.unit_velocity.cross(other.unit_velocity)
 
 
 class RCPair(NamedTuple):
-    '''A pair of coordinates, for access with point.row, point.col'''
+    '''Abstract base class for (row, column) pair'''
     row: int
     col: int
 
@@ -69,43 +76,45 @@ class RCPair(NamedTuple):
     @property
     def cols(self): return self.col
 
-    def __add__(self, other: RCPair|tuple[int, int]) -> RCPair:
+    def __add__[T](self: T, other: RowAndCol) -> T:
         if isinstance(other, RCPair):
-            return RCPair(self.row + other.row, self.col + other.col)
+            return self.__class__(self.row + other.row, self.col + other.col)
         elif isinstance(other, tuple) and len(other) == 2:
-            return RCPair(self.row + other[0], self.col + other[1])
+            return self.__class__(self.row + other[0], self.col + other[1])
         else:
             raise TypeError
 
-    def __sub__(self, other: RCPair|tuple[int, int]) -> RCPair:
+    def __sub__[T](self: T, other: RowAndCol) -> T:
         if isinstance(other, RCPair):
-            return RCPair(self.row - other.row, self.col - other.col)
+            return self.__class__(self.row - other.row, self.col - other.col)
         elif isinstance(other, tuple) and len(other) == 2:
-            return RCPair(self.row - other[0], self.col - other[1])
+            return self.__class__(self.row - other[0], self.col - other[1])
         else:
             raise TypeError
 
 
 class Point(RCPair):
+    '''A pair of coordinates, for access with point.row, point.col'''
 
-    def __add__(self, other: RCPair|tuple[int, int]) -> Point:
-        return Point(*super().__add__(other))
+    #def __add__(self, other: RowAndCol) -> Point:
+    #    return Point(*super().__add__(other))
     
-    def __sub__(self, other: RCPair|tuple[int, int]) -> Point:
-        return Point(*super().__sub__(other))
+    #def __sub__(self, other: RowAndCol) -> Point:
+    #    return Point(*super().__sub__(other))
     
 
 class Velocity(RCPair):
+    '''A 2D velocity vector (in a cardinal direction)'''
     @property
     def dr(self): return self.row
     @property
     def dc(self): return self.col
 
-    def __add__(self, other: RCPair|tuple[int, int]) -> Velocity:
-        return Velocity(*super().__add__(other))
+    #def __add__(self, other: RCPair|tuple[int, int]) -> Velocity:
+    #    return Velocity(*super().__add__(other))
     
-    def __sub__(self, other: RCPair|tuple[int, int]) -> Velocity:
-        return Velocity(*super().__sub__(other))
+    #def __sub__(self, other: RCPair|tuple[int, int]) -> Velocity:
+    #    return Velocity(*super().__sub__(other))
     
     def __mul__(self, scalar: int) -> Velocity:
         return Velocity(self.row * scalar, self.col * scalar)
@@ -136,25 +145,100 @@ class Velocity(RCPair):
         #    raise NotImplementedError('Cardinal directions only')
 
     def cross(self, other: Velocity) -> int:
+        '''Cross product of two velocity vectors
+        NB: Only for cardinal directions!'''
         return self.dr * other.dc - self.dc * other.dr
 
+type RowAndCol = RCPair | tuple[int, int]
 
-class Grid[T](list[list[T]]):
+class _Grid[T](Sequence[Sequence[T]], ABC):
+    def __init__[T_in](self,
+                       grid: Iterable[Iterable[T_in]],
+                       transformer: Callable[[T_in], T] = lambda x: x):
+        ...
+    
+    height: int
+    width: int
+
+    def __str__(self) -> str:
+        return '\n'.join(''.join(str(x) for x in row) for row in self)
+
+    def get_row(self, row_no: int) -> Sequence[T]:
+        ...
+    
+    def get_col(self, col_no: int) -> Sequence[T]:
+        ...
+
+    @singledispatchmethod
+    def get_value(self, point: Point|RowAndCol) -> T:
+        return self.get_value(*point)
+    @get_value.register
+    def _(self, row: int, col: int):
+        if not self.in_bounds(row, col):
+            raise IndexError
+        return self[row][col]
+
+    @singledispatchmethod
+    def in_bounds(self, point: Point|RowAndCol) -> bool:
+        return self.in_bounds(*point)
+    @in_bounds.register
+    def _(self, row: int, col: int):
+        return row in range(self.height) and col in range(self.width)
+
+    def iter_all(self) -> Generator[tuple[Point, T]]:
+        for r, row in enumerate(self):
+            for c, val in enumerate(row):
+                yield Point(r, c), val
+    
+    def find(self, target: T) -> Point:
+        return next(self.find_all(target))
+
+    def find_all(self, target: T) -> Generator[Point]:
+        for point, val in self.iter_all():
+            if val == target:
+                yield point
+
+    @singledispatchmethod
+    def neighbors(self, point: Point|RowAndCol) -> Generator[tuple[Point, T]]:
+        STEPS = (Velocity(-1, 0), Velocity(0, 1), Velocity(1, 0), Velocity(0, -1))
+        for step in STEPS:
+            if self.in_bounds(neighbor := Point(*point) + step):
+                yield neighbor, self.get_value(neighbor)
+    @neighbors.register
+    def _(self, row: int, col: int):
+        return self.neighbors(Point(row, col))
+
+    @singledispatchmethod
+    def contiguous(self, origin: Point|RowAndCol) -> tuple[Point, ...]:
+        value = self.get_value(origin)
+        members = set()
+        stack = [origin]
+        while stack:
+            if (point := stack.pop()) in members:
+                continue
+            members.add(point)
+            stack.extend(neigh_pt for neigh_pt, neigh_val in self.neighbors(*point)
+                         if neigh_val == value and neigh_pt not in members)
+        return tuple(sorted(members))
+    @contiguous.register
+    def _(self, row: int, col:int):
+        return self.contiguous(Point(row, col))
+
+
+class Grid_Mutable[T](list[list[T]], _Grid[T]):
     '''Represent a 2D grid as a list of lists'''
 
-    @classmethod
-    def from_string(cls, string: str, transformer: Callable[[str], T]|None = None) -> Grid[T]:
-        return cls.from_list(string.splitlines(), transformer)
-    
-    @classmethod
-    def from_list(cls, sequence: Sequence[str], transformer: Callable[[str], T]|None = None) -> Grid[T]:
-        if transformer is None:
-            return cls([[s for s in row] for row in sequence])
-        else:
-            return cls([[transformer(s) for s in row] for row in sequence])
-    
+    @singledispatchmethod
+    def __init__[T_in](self,
+                       grid: Iterable[Iterable[T_in]],
+                       transformer: Callable[[T_in], T] = lambda x: x):
+        super().__init__([[transformer(x) for x in row] for row in grid])
+    @__init__.register
+    def __init__str(self, grid: str, **kwargs):
+        return self.__init__(grid.splitlines(), **kwargs)
+
     @property
-    def heigth(self) -> int:
+    def height(self) -> int:
         return len(self)
     @property
     def width(self) -> int:
@@ -178,141 +262,53 @@ class Grid[T](list[list[T]]):
             self[start_row+i][col_no] = val
     
     @singledispatchmethod
-    def get_value(self, point: tuple[int, int]) -> T:
-        return self.get_value(*point)
-    @get_value.register
-    def _(self, point: Point|RCPair):
-        return self.get_value(*point)
-    @get_value.register
-    def _(self, row: int, col: int):
-        if not self.in_bounds(row, col):
-            raise IndexError
-        return self[row][col]
-    
-    @singledispatchmethod
-    def in_bounds(self, point: tuple[int, int]) -> bool:
-        return self.in_bounds(*point)
-    @in_bounds.register
-    def _(self, point: Point|RCPair):
-        return self.in_bounds(*point)
-    @in_bounds.register
-    def _(self, row: int, col: int):
-        return row in range(len(self)) and col in range(len(self[0]))
-
-    def iter_all(self) -> Generator[tuple[Point, T]]:
-        for r, row in enumerate(self):
-            for c, val in enumerate(row):
-                yield Point(r, c), val
-    
-    def find(self, target: T) -> Generator[Point]:
-        for point, val in self.iter_all():
-            if val == target:
-                yield point
-    
-    @singledispatchmethod
-    def neighbors(self, *args) -> Generator[tuple[Point, T]]:
-        raise TypeError
-    @neighbors.register
-    def _(self, point: Point):
-        for velocity in (Velocity(-1, 0), Velocity(0, 1), Velocity(1, 0), Velocity(0, -1)):
-            if self.in_bounds(neighbor := point + velocity):
-                yield neighbor, self.get_value(neighbor)
-    @neighbors.register
-    def _(self, row: int, col: int):
-        return self.neighbors(Point(row, col))
-    
-    @singledispatchmethod
-    def contiguous(self, *args) -> tuple[Point, ...]:
-        raise TypeError
-    @contiguous.register
-    def _(self, origin: Point):
-        value = self.get_value(origin)
-        members = set()
-        stack = [origin]
-        while stack:
-            if (point := stack.pop()) in members:
-                continue
-            members.add(point)
-            stack.extend(neigh_pt for neigh_pt, neigh_val in self.neighbors(*point)
-                         if neigh_val == value and neigh_pt not in members)
-        return tuple(sorted(members))
-    @contiguous.register
-    def _(self, row: int, col:int):
-        return self.contiguous(Point(row, col))
-    
-    def rotate(self, initial: Direction, final: Direction) -> None:
-        if initial == final:
+    def rotate(self, degrees: int) -> None:
+        match degrees:
+            case 0:
+                return
+            case 90 | -270:
+                self[:] = [list(row) for row in zip(*self[::-1])]
+            case 180 | -180:
+                self[:] = [list(row[::-1]) for row in self[::-1]]
+            case 270 | -90:
+                self[:] = [list(row) for row in zip(*self)][::-1]
+            case other:
+                raise NotImplementedError(f'Cannot rotate by {other} degrees.')
+    @rotate.register
+    def _(self, initial: Direction, final: Direction) -> None:
+        if initial == final:  # cross product will be 0, same as 180
             return
         match initial.cross(final):
-            case -1:  # 90 degrees clockwise
-                self[:] = [list(row) for row in zip(*self[::-1])]
-            case  0:  # 180 degrees
-                self[:] = [list(row[::-1]) for row in self[::-1]]
-            case  1:  # 270 degrees clockwise
-                self[:] = [list(row) for row in zip(*self)][::-1]
+            case -1: return self.rotate(90)
+            case  0: return self.rotate(180)
+            case  1: return self.rotate(270)
+        raise NotImplementedError(f'Cannot rotate; orthogonal only')
     
-    def print(self) -> None:
-        for row in self:
-            print(''.join(str(x) for x in row))
-        
 
-class Grid_Immutable[T](tuple[tuple[T, ...], ...]):
+class Grid(Grid_Mutable):
+    # Alias to Grid_Mutable
+    ...
+
+
+class Grid_Immutable[T](tuple[tuple[T, ...], ...], _Grid):
     '''Represent a 2D grid as a tuple of tuples.'''
 
-    @staticmethod
-    def from_string(string: str) -> Grid_Immutable[T]:
-        return Grid_Immutable.from_list(string.splitlines())
-    
-    @staticmethod
-    def from_list(sequence: Sequence[str], transformer: Callable[[str], T] = lambda x: x) -> Grid_Immutable[T]:
-        return Grid_Immutable(tuple(tuple(transformer(s) for s in row) for row in sequence))
-    
-    def get_row(self, row_no: int) -> tuple[T, ...]:
-        return self[row_no]
-    
-    def get_col(self, col_no: int) -> tuple[T, ...]:
-        return tuple(row[col_no] for row in self)
-    
-    def get_value(self, row_no: int, col_no: int) -> T:
-        if not self.in_bounds(row_no, col_no):
-            raise IndexError
-        return self[row_no][col_no]
-    
-    def in_bounds(self, row_no, col_no) -> bool:
-        return row_no in range(len(self)) and col_no in range(len(self[0]))
+    @singledispatchmethod
+    def __new__[T_in](cls,
+                       grid: Iterable[Iterable[T_in]]|str,
+                       transformer: Callable[[T_in], T] = lambda x: x):
+        if isinstance(grid, str):
+            grid = grid.splitlines()
+        return super().__new__(cls, (tuple(transformer(x) for x in row) for row in grid))
 
-    def iter_all(self) -> Generator[tuple[tuple[int, int], T]]:
-        for r, row in enumerate(self):
-            for c, val in enumerate(row):
-                yield (r, c), val
-    
-    def find(self, target: T) -> Generator[tuple[int, int]]:
-        for point, val in self.iter_all():
-            if val == target:
-                yield point
-    
-    def neighbors(self, row: int, col: int) -> Generator[tuple[tuple[int, int], T]]:
-        for d_row, d_col in ((-1, 0), (0, 1), (1, 0), (0, -1)):
-            if self.in_bounds(*(neighbor := (row+d_row, col+d_col))):
-                yield neighbor, self.get_value(*neighbor)
-    
-    def contiguous(self, row: int, col:int) -> tuple[tuple[int, int], ...]:
-        value = self.get_value(row, col)
-        members = set()
-        stack = [(row, col)]
-        while stack:
-            if (point := stack.pop()) in members:
-                continue
-            members.add(point)
-            stack.extend(neigh_pt for neigh_pt, neigh_val in self.neighbors(*point)
-                         if neigh_val == value and neigh_pt not in members)
-        return tuple(sorted(members))
+    @singledispatchmethod
+    def __init__(self, _grid, _transformer=None):
+        self.height: int = len(self)
+        self.width: int = len(self[0])
 
-#@dataclass
+
 class Grid_Sparse[T](dict[Point, T]):
     '''Represent a 2D grid as a dictionary of points to values.'''
-    #dimensions: RCPair|None
-    #bg_out: str
 
     # input as mapping of points to values
     @singledispatchmethod
@@ -327,7 +323,7 @@ class Grid_Sparse[T](dict[Point, T]):
                           if bg_in not in (v, tv := transformer(v))},
                          **kwargs)
         
-        self.dimensions: RCPair|None = RCPair(*dimensions) if isinstance(dimensions, tuple) else dimensions
+        self.dimensions: RowAndCol|None = RCPair(*dimensions) if isinstance(dimensions, tuple) else None
         self.bg_out: str = str(bg_out)
     
     # input as list of strings or list of lists
@@ -351,10 +347,10 @@ class Grid_Sparse[T](dict[Point, T]):
     
     @property
     def _dimensions_auto(self) -> RCPair:
-        if self.dimensions is None:
-            return RCPair(max(point.row for point in self)+1, max(point.col for point in self)+1)
-        else:
+        if isinstance(self.dimensions, RCPair):
             return self.dimensions
+        else:
+            return RCPair(max(point.row for point in self)+1, max(point.col for point in self)+1)
     
     def in_bounds(self, point: Point) -> bool:
         if self.dimensions is None:
@@ -368,3 +364,16 @@ class Grid_Sparse[T](dict[Point, T]):
         for point, val in self.items():
             if val == target:
                 yield point
+
+
+if __name__ == '__main__':
+    print('test Grid creation:')
+    for data in ([['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']],
+                 ['ijk', 'lmn', 'opq'],
+                 'rst\nuvw\nxyz'):
+        grid = Grid_Mutable(data)
+        print(grid, end='\n\n')
+    
+    print('test neighbors:')
+    print(tuple(grid.neighbors(Point(0,0))))
+    print(tuple(grid.neighbors(Point(1,1))))

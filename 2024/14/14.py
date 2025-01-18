@@ -13,6 +13,10 @@ import re
 from statistics import mean, pstdev, pvariance
 from typing import NamedTuple
 
+import sys 
+import os
+sys.path.append(os.path.abspath('../../util'))
+from Grid import RCPair
 
 def main():
     ex_data = get_input('./example')
@@ -22,26 +26,6 @@ def main():
     print('\npart 1:', part_1(data))
     #print('\nexample 2:', part_2(ex_data, RCPair(row=7, col=11)), '= _?')
     print('\npart 2:', part_2(data))
-
-
-class RCPair(NamedTuple):
-    '''A pair of coordinates, for access with point.row, point.col'''
-    row: int
-    col: int
-
-    @property
-    def r(self): return self.row
-    @property
-    def c(self): return self.col
-    @property
-    def rows(self): return self.row
-    @property
-    def cols(self): return self.col
-
-    def __add__(self, other):
-        return RCPair(self.row + other.row, self.col + other.col)
-    def __sub__(self, other):
-        return RCPair(self.row - other.row, self.col - other.col)
 
 
 def get_input(file='./input'):

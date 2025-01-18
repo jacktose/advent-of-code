@@ -7,7 +7,7 @@ Day 8: Resonant Collinearity
 
 from __future__ import annotations
 from collections.abc import Sequence
-from operator import add, sub
+#from operator import add, sub
 from typing import NamedTuple
 
 
