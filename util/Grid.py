@@ -7,7 +7,7 @@ from abc import ABC
 from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 import enum
 from functools import singledispatchmethod
-from typing import NamedTuple
+from typing import NamedTuple, overload
 
 
 class _classproperty:
@@ -44,6 +44,37 @@ class Direction(enum.Flag):
             Direction.E: '>',
         }[self]
     character = arrow
+
+    @property
+    def left(self) -> Direction:
+        return {
+            Direction.N: Direction.W,
+            Direction.E: Direction.N,
+            Direction.S: Direction.E,
+            Direction.W: Direction.S,
+        }[self]
+
+    @property
+    def right(self) -> Direction:
+        return {
+            Direction.N: Direction.E,
+            Direction.E: Direction.S,
+            Direction.S: Direction.W,
+            Direction.W: Direction.N,
+        }[self]
+
+    @property
+    def opposite(self) -> Direction:
+        return {
+            Direction.N: Direction.S,
+            Direction.E: Direction.W,
+            Direction.S: Direction.N,
+            Direction.W: Direction.E,
+        }[self]
+
+    @property
+    def perpendiculars(self) -> tuple[Direction, Direction]:
+        return (self.left, self.right)    
     
     @property
     def unit_velocity(self) -> Velocity:
@@ -99,8 +130,30 @@ class Point(RCPair):
     #def __add__(self, other: RowAndCol) -> Point:
     #    return Point(*super().__add__(other))
     
-    #def __sub__(self, other: RowAndCol) -> Point:
+    @overload
+    def __sub__(self, other: Point) -> Velocity: ...
+    @overload
+    def __sub__(self, other: Velocity) -> Point: ...
+    @overload
+    def __sub__(self, other: RowAndCol) -> Point: ...
+
+    #@singledispatchmethod
+    #def __sub__(self, other: Point) -> Velocity:
+    #    return Velocity(*super().__sub__(other))
+    #@__sub__.register
+    #def __sub__velocity(self, other: Velocity) -> Point:
     #    return Point(*super().__sub__(other))
+    #@__sub__.register
+    #def __sub__rowandcol(self, other: RowAndCol) -> Point:
+    #    return Point(*super().__sub__(other))
+
+    def __sub__(self, other: Point|Velocity|RowAndCol) -> Velocity|Point:
+        if isinstance(other, Point):
+            return Velocity(*super().__sub__(other))
+        elif isinstance(other, Velocity):
+            return Point(*super().__sub__(other))
+        else:
+            return Point(*super().__sub__(other))
     
 
 class Velocity(RCPair):
@@ -120,13 +173,22 @@ class Velocity(RCPair):
         return Velocity(self.row * scalar, self.col * scalar)
     
     @property
+    def component_row(self):
+        return Velocity(self.row, 0)
+    @property
+    def component_col(self):
+        return Velocity(0, self.col)
+
+    @property
     def direction(self) -> Direction:
         if self.dc == 0:
             if self.dr < 0: return Direction.N
             if self.dr > 0: return Direction.S
+            if self.dr == 0: return Direction.NONE
         if self.dr == 0:
             if self.dc < 0: return Direction.W
             if self.dc > 0: return Direction.E
+            if self.dc == 0: return Direction.NONE
         raise NotImplementedError('Cardinal directions only')
         #match self.dr, self.dc:
         #    case -1,  0: return Direction.N
@@ -162,6 +224,14 @@ class _Grid[T](Sequence[Sequence[T]], ABC):
 
     def __str__(self) -> str:
         return '\n'.join(''.join(str(x) for x in row) for row in self)
+
+    def string_with_numbers(self) -> str:
+        head_rows = len(str(self.width))
+        left_cols = len(str(self.height))
+        output = [(' ',)*left_cols + line for line in zip(*[list(f'{n:{head_rows}}') for n in range(self.width)])]
+        for r, row in enumerate(self):
+            output.append([f'{r:{left_cols}}'] + list(row))
+        return '\n'.join(''.join(str(x) for x in row) for row in output)
 
     def get_row(self, row_no: int) -> Sequence[T]:
         ...
@@ -293,7 +363,6 @@ class Grid(Grid_Mutable):
 class Grid_Immutable[T](tuple[tuple[T, ...], ...], _Grid):
     '''Represent a 2D grid as a tuple of tuples.'''
 
-    @singledispatchmethod
     def __new__[T_in](cls,
                        grid: Iterable[Iterable[T_in]]|str,
                        transformer: Callable[[T_in], T] = lambda x: x):
@@ -301,10 +370,10 @@ class Grid_Immutable[T](tuple[tuple[T, ...], ...], _Grid):
             grid = grid.splitlines()
         return super().__new__(cls, (tuple(transformer(x) for x in row) for row in grid))
 
-    @singledispatchmethod
     def __init__(self, _grid, _transformer=None):
         self.height: int = len(self)
         self.width: int = len(self[0])
+        self.dimensions = RCPair(self.height, self.width)
 
 
 class Grid_Sparse[T](dict[Point, T]):
@@ -314,7 +383,7 @@ class Grid_Sparse[T](dict[Point, T]):
     @singledispatchmethod
     def __init__[T_in](self,
                  grid: Mapping[Point|tuple[int, int], T_in],
-                 dimensions: RCPair|tuple[int, int]|None = None,
+                 dimensions: RowAndCol|None = None,
                  transformer: Callable[[T_in], T] = lambda x: x,
                  bg_in: T|None = None,
                  bg_out: T|str = '.',
@@ -323,7 +392,7 @@ class Grid_Sparse[T](dict[Point, T]):
                           if bg_in not in (v, tv := transformer(v))},
                          **kwargs)
         
-        self.dimensions: RowAndCol|None = RCPair(*dimensions) if isinstance(dimensions, tuple) else None
+        self.dimensions: RCPair|None = RCPair(*dimensions) if isinstance(dimensions, tuple) else None
         self.bg_out: str = str(bg_out)
     
     # input as list of strings or list of lists
