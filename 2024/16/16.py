@@ -10,88 +10,83 @@ from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, InitVar, field
 from heapq import heappop, heappush
 from itertools import pairwise
-#from math import inf
-from time import time
 from typing import NamedTuple
 
-import sys 
-import os
-sys.path.append(os.path.abspath('../../util'))
+import sys; import os; sys.path.append(os.path.abspath('../../util'))
 from Grid import Direction, Grid_Immutable, Grid_Mutable, Point
 from Intfinity import intfinity as inf
+from Display import style
 
 
 def main():
-    ex_data_0 = get_input('./example0')
     ex_data_1 = get_input('./example1')
     ex_data_2 = get_input('./example2')
     data = get_input('./input')
     
-    print('example 0:', part_1(ex_data_0), '= _?\n')
-    print('example 1.1:', part_1(ex_data_1), '= 7036?')
-    print('\nexample 1.2:', part_1(ex_data_2), '= 11048?')
-    print('\npart 1:', part_1(data))  # 130536
-    print('\nexample 2.1:', part_2(ex_data_1), '= 45?')
-    print('\nexample 2.2:', part_2(ex_data_2), '= 64?')
-    print('\npart 2:', part_2(data))  # 1024
+    print('example 1.1:', part_1(ex_data_1), '= 7036?',  end='\n\n')
+    print('example 1.2:', part_1(ex_data_2), '= 11048?', end='\n\n')
+    print('part 1:',      part_1(data),                  end='\n\n')  # 130536
+    print('example 2.1:', part_2(ex_data_1), '= 45?',    end='\n\n')
+    print('example 2.2:', part_2(ex_data_2), '= 64?',    end='\n\n')
+    print('part 2:',      part_2(data),                  end='\n\n')  # 1024
 
 def get_input(file='./input'):
     with open(file, 'r') as f:
         data = Maze(f.read())
     return data
 
-def part_1(data):
+def part_1(data: Maze) -> int:
     '''Analyze your map carefully. What is the lowest score a Reindeer could possibly get?'''
     maze = data
     maze.dijkstra()
-    maze.true_dijkstra()
     return maze.lowest_cost()
 
-def part_2(data):
+def part_2(data: Maze) -> int:
     '''How many tiles are part of at least one of the best paths through the maze?'''
     maze = data
     # Dijkstra's was run in part_1, same object
     paths = maze.best_paths()
-    visited = set(point for path in paths for point in path)
+    #maze.print_paths(paths)
+    visited = set(node.point for path in paths for node in path)
     return len(visited)
 
 
-#type Node = tuple[Point, Direction]  
 class Node(NamedTuple):
     point: Point
     dir: Direction
 
 @dataclass
 class Maze:
+    '''Represent a maze as a Grid_Immutable plus more metadata and functions for solving.'''
+    grid: Grid_Immutable[str]           = field(init=False)
     grid_data: InitVar[Iterable[Iterable[str]]|str]
-    start_dir: Direction = Direction.E
     step_cost: int = 1
     turn_cost: int = 1000
-    grid: Grid_Immutable[str] = field(init=False)
-    start: Point = field(init=False)
-    end: Point = field(init=False)
-    costs: dict[Point, dict[Direction, int]] = field(init=False)
-    graph: dict[Node, dict[Node, int]] = field(init=False)
-    parents: dict[Point, dict[Direction, list[tuple[Point, Direction]]]] = field(init=False)
-    gparents: dict[Node, list[Node]] = field(init=False)
+    start_dir: Direction = Direction.E
+    start: Point                        = field(init=False, repr=False)
+    _start_node: Node                   = field(init=False, repr=False)
+    end: Point                          = field(init=False, repr=False)
+    _end_nodes: tuple[Node, ...]        = field(init=False, repr=False)
+    costs: dict[Node, int]              = field(init=False, repr=False)
+    graph: dict[Node, dict[Node, int]]  = field(init=False, repr=False)
+    parents: dict[Node, list[Node]]     = field(init=False, repr=False)
+
+    _DIRECTIONS: tuple[Direction, ...] = (Direction.N, Direction.E, Direction.S, Direction.W)
 
     def __post_init__(self, grid_data):
         self.grid: Grid_Immutable[str] = Grid_Immutable(grid_data)
         self.start = self.grid.find('S')
+        self._start_node = Node(self.start, self.start_dir)
         self.end = self.grid.find('E')
-        DIRECTIONS = (Direction.N, Direction.E, Direction.S, Direction.W)
-        self.costs = {point: {dir: inf for dir in DIRECTIONS}
-                      for point, char in self.grid.iter_all() if char != '#'}
-        self.costs[self.start][self.start_dir] = 0
+        self._end_nodes = tuple(Node(self.end, dir) for dir in self._DIRECTIONS)
         self.graph = {Node(point, dir): self._node_weights(point, dir)
                       for point, char in self.grid.iter_all() if char != '#'
-                      for dir in DIRECTIONS}
-        self.parents = {point: {dir: [] for dir in DIRECTIONS}
-                        for point, char in self.grid.iter_all() if char != '#'}
-        #TODO: rewrite best_paths() for pure graph style:
-        self.gparents = {node: [] for node in self.graph}
+                      for dir in self._DIRECTIONS}
+        self.costs: dict[Node, int] = {node: inf for node in self.graph}
+        self.parents = {node: [] for node in self.graph}
     
     def _node_weights(self, point: Point, dir: Direction) -> dict[Node, int]:
+        '''Generate weights from a Node (Point + Direction) to neighboring Nodes.'''
         weights = {}
         if self.grid.get_point(nei := point + dir.unit_velocity) not in (None, '#'):
             weights |= {Node(nei, dir): self.step_cost}
@@ -99,103 +94,74 @@ class Maze:
                     Node(point, dir.right):      self.turn_cost,
                     Node(point, dir.opposite): 2*self.turn_cost}
         return weights
+    
+    def __str__(self) -> str:
+        return str(self.grid)
 
-    def true_dijkstra(self):
+    def dijkstra(self) -> None:
         '''Use Dijkstra's algorithm to walk the graph, finding best cost from start to each node.
-        Implemented for a graph of Node(Point, Direction), much cleaner.'''
-        start: Node = Node(self.start, self.start_dir)
-        costs: dict[Node, int] = {node: inf for node in self.graph}
-        costs[start] = 0
-        todo: list[tuple[int, int, Node]] = [(0, x:=0, start)]
+        Resulting costs stored in self.costs.'''
+        self.costs[self._start_node] = 0
+        todo: list[tuple[int, int, Node]] = [(0, x:=0, self._start_node)]
         processed = set()
-        tasks: int = 0
-        start_time = time()
         while todo:
             _, _, node = heappop(todo)
             if node in processed:
                 continue
             processed.add(node)
-            tasks += 1
-            cost_here = costs[node]
+            cost_here = self.costs[node]
             for step, weight in self.graph[node].items():
-                if (cost_there := cost_here + weight) < costs[step]:
-                    costs[step] = cost_there
-                    heappush(todo, (costs[step], x:=x+1, step))
-                    self.gparents[step] = [node]
-                elif cost_there == costs[step]:
-                    self.gparents[step] += [node]
-        end_time = time() - start_time
-        #print(self._end_costs(costs))
-        print(f'{tasks=}\t{end_time=}')
+                if (cost_there := cost_here + weight) < self.costs[step]:
+                    self.costs[step] = cost_there
+                    heappush(todo, (self.costs[step], x:=x+1, step))  # Dijkstra
+                    #heappush(todo, (self.costs[step] + self.min_cost_to_end(step), x:=x+1, step))  # A*
+                    self.parents[step] = [node]
+                elif cost_there == self.costs[step]:
+                    self.parents[step] += [node]
 
-    #def _end_costs(self, costs) -> dict[Direction, int]:
-    #    return {dir: costs[Node(self.end, dir)]
-    #            for dir in (Direction.N, Direction.E, Direction.S, Direction.W)}
-
-    def dijkstra(self):
-        '''Use Dijkstra's algorithm to walk the graph, finding best cost from start to each node.'''
-        todo = [(0, self.start, x:=0, self.start_dir)]
-        processed = set()
-        tasks = 0
-        start_time = time()
-        while todo:
-            _, here, _, cur_dir = heappop(todo)
-            if (here, cur_dir) in processed:
-                continue
-            processed.add((here, cur_dir))
-            tasks += 1
-            steps = ((cur_dir,       self.costs[here][cur_dir] + self.step_cost),
-                     (cur_dir.left,  self.costs[here][cur_dir] + self.step_cost + self.turn_cost),
-                     (cur_dir.right, self.costs[here][cur_dir] + self.step_cost + self.turn_cost))
-            neighbors = ((neigh, dir, cost) for dir, cost in steps
-                         if (neigh := here + dir.unit_velocity) in self.costs)
-            for neigh, dir, cost in neighbors:
-                if cost < self.costs[neigh][dir]:
-                    self.costs[neigh][dir] = cost
-                    self.parents[neigh][dir] = [(here, cur_dir)]
-                    sort_heuristic: int = cost  # Dijkstra
-                    #sort_heuristic: int = cost + self.min_cost_to_end(neigh, dir)  # A*
-                    heappush(todo, (sort_heuristic, neigh, x:=x+1, dir))
-                elif cost == self.costs[neigh][dir]:
-                    self.parents[neigh][dir].append((here, cur_dir))
-        end_time = time()
-        print('tasks: ', tasks)
-        print('time: ', end_time - start_time)
-    
-    def min_cost_to_end(self, point: Point, dir: Direction) -> int:
+    def min_cost_to_end(self, node: Node) -> int:
         '''Minimum cost from any (point, direction) to end.
         For use in heuristic for A* algorithm.'''
-        vector = self.end - point
+        vector = self.end - node.point
         taxi_dist = vector.row + vector.col
         dirs_to_end = vector.component_row.direction | vector.component_col.direction
-        if dir == dirs_to_end:  # Pointing at end
+        if node.dir == dirs_to_end:  # Pointing at end
             turns = 0
-        elif dir in dirs_to_end:  # Pointing in one direction needed, or perp. but aligned
+        elif node.dir in dirs_to_end:  # Pointing in one direction needed, or perp. but aligned
             turns = 1
         else:
             turns = 2
         return (self.step_cost * taxi_dist) + (self.turn_cost * turns)
 
-    def lowest_cost(self):
-        return min(self.costs[self.end].values())
+    def lowest_cost(self) -> int:
+        return min(self.costs[node] for node in self._end_nodes)
     
-    def best_paths(self) -> list[list[Point]]:
+    def best_paths(self) -> list[list[Node]]:
         '''List of all paths start->end with best total cost.
         Reverse BFS of sorts from end. Or should I just store parents in dijkstra()?'''
-        best_cost = min(self.costs[self.end].values())
-        incomplete_paths = [[(self.end, dir)] for dir, cost in self.costs[self.end].items() if cost == best_cost]
+        best_cost = self.lowest_cost()
+        incomplete_paths = [[node] for node, cost in self.costs.items()
+                            if node.point == self.end and cost == best_cost]
         paths = []
         while incomplete_paths:
             path = incomplete_paths.pop()
-            here, dir = path[-1]
-            if here == self.start:
-                paths.append([point for point, _ in reversed(path)])
+            if (here := path[-1]) == self._start_node:
+                paths.append(path[::-1])
                 continue
-            parents = self.parents[here][dir]
+            parents = self.parents[here]
             incomplete_paths.extend(path + [parent] for parent in parents)
         return paths
 
-    def path_cost(self, path: list[Point]) -> int:
+    def path_cost(self, path: Sequence[Point]|Sequence[Node]) -> int:
+        '''Calculate total cost of a path.'''
+        if isinstance(path[0], Point):
+            return self._path_cost_points(path)  # type: ignore
+        elif isinstance(path[0], Node):
+            return self._path_cost_nodes(path)  # type: ignore
+        else:
+            raise TypeError
+
+    def _path_cost_points(self, path: Sequence[Point]) -> int:
         cost: int = 0
         prev_dir = self.start_dir
         for a, b in pairwise(path):
@@ -206,16 +172,32 @@ class Maze:
                 prev_dir = dir
         return cost
 
-    def print_paths(self, paths: Sequence[Sequence[Point]], correct_cost: int = 130536) -> None:
-        visited = set(point for path in paths for point in path)
-        good_paths, bad_paths = filter_yes_no(lambda p: self.path_cost(p) == correct_cost, paths)
-        good_visited = set(point for path in good_paths for point in path)
-        bad_visited = set(point for path in bad_paths for point in path)
+    def _path_cost_nodes(self, path: Sequence[Node]) -> int:
+        cost: int = 0
+        for a, b in pairwise(path):
+            match (a.point == b.point), (a.dir == b.dir):
+                case False, True:
+                    cost += self.step_cost
+                case True, False:
+                    cost += self.turn_cost
+                case _:
+                    raise RuntimeError
+        return cost
+
+    def print_paths(self, paths: Sequence[Sequence[Point]|Sequence[Node]],
+                    correct_cost: int = 130536) -> None:
+        '''Print grid with paths as "O"s.
+        Paths of correct cost are green. Paths of wrong cost are red. Overlap is yellow.'''
+        visited = set(step for path in paths for step in path)
+        is_good = lambda path: self.path_cost(path) == correct_cost
+        good_paths, bad_paths = filter_yes_no(is_good, paths)
+        good_visited = set(step for path in good_paths for step in path)
+        bad_visited = set(step for path in bad_paths for step in path)
         grid = Grid_Mutable(self.grid)
         grid[0][0] = style.FAINT + grid[0][0]
-        for point in visited:
+        for step in visited:
             char = style.RESET
-            match (point in good_visited), (point in bad_visited):
+            match (step in good_visited), (step in bad_visited):
                 case True, False:
                     char += style.FG.GREEN
                 case True, True:
@@ -223,11 +205,13 @@ class Maze:
                 case False, True:
                     char += style.FG.RED
             char += 'O' + style.RESET + style.FAINT
-            grid[point.row][point.col] = char
-        print(grid.string_with_numbers())
-        print(style.RESET)
+            point: Point = step.point if isinstance(step, Node) else point
+            grid.set_point(point, char)
+        print(grid.string_with_numbers() + style.RESET)
 
 def filter_yes_no[T](predicate: Callable[[T], bool], iterable: Iterable[T]) -> tuple[list[T], list[T]]:
+    '''Like filter() and itertools.filterfalse() in one iteration.
+    Returns tuple of lists: Items where predicate is true, items where predicate is false.'''
     yes = []
     no = []
     for item in iterable:
@@ -236,45 +220,6 @@ def filter_yes_no[T](predicate: Callable[[T], bool], iterable: Iterable[T]) -> t
         else:
             no.append(item)
     return yes, no
-
-
-class _fg(NamedTuple):
-    BLACK =   '\x1b[30m'
-    RED =     '\x1b[31m'
-    GREEN =   '\x1b[32m'
-    YELLOW =  '\x1b[33m'
-    BLUE =    '\x1b[34m'
-    MAGENTA = '\x1b[35m'
-    CYAN =    '\x1b[36m'
-    WHITE =   '\x1b[37m'
-
-class _bg(NamedTuple):
-    BLACK =   '\x1b[40m'
-    RED =     '\x1b[41m'
-    GREEN =   '\x1b[42m'
-    YELLOW =  '\x1b[43m'
-    BLUE =    '\x1b[44m'
-    MAGENTA = '\x1b[45m'
-    CYAN =    '\x1b[46m'
-    WHITE =   '\x1b[47m'
-
-class style(NamedTuple):
-    RESET =         '\x1b[0m'
-    BOLD =          '\x1b[1m'
-    FAINT =         '\x1b[2m'
-    ITALIC =        '\x1b[3m'
-    UNDERLINED =    '\x1b[4m'
-    INVERSE =       '\x1b[7m'
-    STRIKETHROUGH = '\x1b[9m'
-    FG = _fg
-    BG = _bg
-
-class control(NamedTuple):
-    SHOW_CURSOR = '\x1b[?25h'
-    HIDE_CURSOR = '\x1b[?25l'
-    ERASE_CURSOR_TO_END = '\x1b[0J'
-    ERASE_CURSOR_TO_START = '\x1b[1J'
-    ERASE_SCREEN = '\x1b[2J'
 
 
 if __name__ == '__main__':
