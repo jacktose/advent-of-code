@@ -233,11 +233,18 @@ class _Grid[T](Sequence[Sequence[T]], ABC):
             output.append([f'{r:{left_cols}}'] + list(row))
         return '\n'.join(''.join(str(x) for x in row) for row in output)
 
-    def get_row(self, row_no: int) -> Sequence[T]:
+    def get_row(self, row_no: int) -> Sequence[T]|None:
         ...
     
-    def get_col(self, col_no: int) -> Sequence[T]:
+    def get_col(self, col_no: int) -> Sequence[T]|None:
         ...
+    
+    def get_point(self, point: Point|RowAndCol) -> T|None:
+        point = Point(*point)
+        try:
+            return self[point.row][point.col]
+        except IndexError:
+            return None
 
     @singledispatchmethod
     def get_value(self, point: Point|RowAndCol) -> T:
@@ -314,22 +321,32 @@ class Grid_Mutable[T](list[list[T]], _Grid[T]):
     def width(self) -> int:
         return len(self[0])
     
-    def get_row(self, row_no: int) -> list[T]:
-        return self[row_no]
+    def get_row(self, row_no: int) -> list[T]|None:
+        try:
+            return self[row_no]
+        except IndexError:
+            return None
     
     def set_row(self, row_no: int, contents: Sequence[T], start_col: int = 0) -> None:
         if not self.in_bounds(row_no, start_col) or not self.in_bounds(row_no, start_col+len(contents)-1):
             raise IndexError
         self[row_no][start_col:start_col+len(contents)-1] = list(contents)
     
-    def get_col(self, col_no: int) -> list[T]:
-        return [row[col_no] for row in self]
+    def get_col(self, col_no: int) -> list[T]|None:
+        try:
+            return [row[col_no] for row in self]
+        except IndexError:
+            return None
     
     def set_col(self, col_no: int, contents: Sequence[T], start_row: int = 0) -> None:
         if not self.in_bounds(start_row, col_no) or not self.in_bounds(start_row+len(contents)-1, col_no):
             raise IndexError
         for i, val in enumerate(contents):
             self[start_row+i][col_no] = val
+
+    def set_point(self, point: Point|RowAndCol, value: T) -> None:
+        point = Point(*point)
+        self[point.row][point.col] = value
     
     @singledispatchmethod
     def rotate(self, degrees: int) -> None:
@@ -374,6 +391,18 @@ class Grid_Immutable[T](tuple[tuple[T, ...], ...], _Grid):
         self.height: int = len(self)
         self.width: int = len(self[0])
         self.dimensions = RCPair(self.height, self.width)
+
+    def get_row(self, row_no: int) -> tuple[T, ...]|None:
+        try:
+            return self[row_no]
+        except IndexError:
+            return None
+    
+    def get_col(self, col_no: int) -> tuple[T, ...]|None:
+        try:
+            return tuple(row[col_no] for row in self)
+        except IndexError:
+            return None
 
 
 class Grid_Sparse[T](dict[Point, T]):
