@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-https://adventofcode.com/2021/day/_
+https://adventofcode.com/2024/day/_
 
 """
 
@@ -18,7 +18,7 @@ def get_input(file='./input'):
     with open(file, 'r') as f:
         #data = f.read()
         data = f.read().splitlines()
-        #data = tuple(tuple(line for line in chunk.splitlines()) for chunk in f.read.split('\n\n'))
+        #data = tuple(tuple(line for line in chunk.splitlines()) for chunk in f.read().split('\n\n'))
         #data = tuple(tuple(int(n) for n in line.split()) for line in f)
     return data
 
