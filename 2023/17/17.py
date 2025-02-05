@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-https://adventofcode.com/2021/day/17
+https://adventofcode.com/2023/day/17
 Day 17: Clumsy Crucible
 """
 

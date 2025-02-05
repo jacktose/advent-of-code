@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-https://adventofcode.com/2021/day/6
+https://adventofcode.com/2023/day/6
 Day 6: Wait For It
 """
 

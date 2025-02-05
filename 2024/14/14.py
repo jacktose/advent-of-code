@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-https://adventofcode.com/2021/day/14
+https://adventofcode.com/2024/day/14
 Day 14: Restroom Redoubt
 """
 

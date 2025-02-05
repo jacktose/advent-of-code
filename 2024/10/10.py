@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-https://adventofcode.com/2021/day/10
+https://adventofcode.com/2024/day/10
 Day 10: Hoof It
 """
 

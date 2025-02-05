@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-https://adventofcode.com/2021/day/7
+https://adventofcode.com/2024/day/7
 Day 7: Bridge Repair
 """
 
