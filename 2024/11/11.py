@@ -10,8 +10,8 @@ from functools import lru_cache
 
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data), '= 55312?')
@@ -29,7 +29,7 @@ def main():
     print(num_after_blinking.cache_info())
     print(blink.cache_info())
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = tuple(int(n) for n in f.read().split())
     return data

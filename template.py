@@ -6,15 +6,15 @@ https://adventofcode.com/2024/day/_
 """
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:', part_1(ex_data), '= _?')
     #print('\npart 1:', part_1(data))
     #print('\nexample 2:', part_2(ex_data), '= _?')
     #print('\npart 2:', part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         #data = f.read()
         data = f.read().splitlines()

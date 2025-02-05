@@ -10,8 +10,8 @@ from copy import deepcopy
 from itertools import takewhile
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(*deepcopy(ex_data)), '= CMZ?')
@@ -36,7 +36,7 @@ class Move(NamedTuple):
     def from_string(cls, string):
         return cls(*(int(n) for n in string.split()[1::2]))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         #layers = []
         #for line in f:

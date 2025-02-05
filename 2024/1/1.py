@@ -8,8 +8,8 @@ Day 1: Historian Hysteria
 from collections import Counter
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data), '= 11?')
@@ -25,7 +25,7 @@ def main():
 
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = [sorted(t) for t in zip(*((int(n) for n in pair) for pair in (line.split() for line in f)))]
     return data

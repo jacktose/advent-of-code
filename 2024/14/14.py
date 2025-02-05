@@ -19,8 +19,8 @@ sys.path.append(os.path.abspath('../../util'))
 from Grid import RCPair
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:', part_1(ex_data, RCPair(row=7, col=11)), '= 12?')
     print('\npart 1:', part_1(data))
@@ -28,7 +28,7 @@ def main():
     print('\npart 2:', part_2(data))
 
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = tuple((RCPair(pr, pc), RCPair(vr, vc)) for pc, pr, vc, vr in (
                       (int(n) for n in re.findall(r'-?\d+', line)) for line in f))

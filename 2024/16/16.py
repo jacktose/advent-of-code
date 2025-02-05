@@ -19,9 +19,9 @@ from Display import style
 
 
 def main():
-    ex_data_1 = get_input('./example1')
-    ex_data_2 = get_input('./example2')
-    data = get_input('./input')
+    ex_data_1 = get_input('./example1.txt')
+    ex_data_2 = get_input('./example2.txt')
+    data = get_input('./input.txt')
     
     print('example 1.1:', part_1(ex_data_1), '= 7036?',  end='\n\n')
     print('example 1.2:', part_1(ex_data_2), '= 11048?', end='\n\n')
@@ -30,7 +30,7 @@ def main():
     print('example 2.2:', part_2(ex_data_2), '= 64?',    end='\n\n')
     print('part 2:',      part_2(data),                  end='\n\n')  # 1024
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = Maze(f.read())
     return data

@@ -16,12 +16,12 @@ from Grid import Grid_Immutable as Grid
 
 
 def main():
-    ex_data_1 = get_input('./example1')
-    ex_data_2 = get_input('./example2')
-    ex_data_3 = get_input('./example3')
-    ex_data_4 = get_input('./example4')
-    ex_data_5 = get_input('./example5')
-    data = get_input('./input')
+    ex_data_1 = get_input('./example1.txt')
+    ex_data_2 = get_input('./example2.txt')
+    ex_data_3 = get_input('./example3.txt')
+    ex_data_4 = get_input('./example4.txt')
+    ex_data_5 = get_input('./example5.txt')
+    data = get_input('./input.txt')
     
     print('example 1-1:')
     print(part_1(ex_data_1), '= 140?')
@@ -47,7 +47,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data: Grid[str] = Grid(f.read())
     return data

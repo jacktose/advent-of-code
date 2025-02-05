@@ -9,8 +9,8 @@ import sys
 from collections import namedtuple
 
 def main():
-    ex_dots, ex_folds = get_input('./example')
-    dots, folds = get_input('./input')
+    ex_dots, ex_folds = get_input('./example.txt')
+    dots, folds = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_dots, ex_folds, debug=False), '= 17?')
@@ -25,7 +25,7 @@ def main():
     print(part_2(dots, folds))
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     dots = []
     folds = []
     with open(file, 'r') as f:

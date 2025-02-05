@@ -12,8 +12,8 @@ from typing import ClassVar, Sequence
 
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data), '= 102?')
@@ -27,7 +27,7 @@ def main():
     #print('\npart 2:')
     #print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         #data = f.read().splitlines()
         data = {complex(r, c): int(v) for (r, row) in enumerate(f) for (c, v) in enumerate(row.rstrip())}

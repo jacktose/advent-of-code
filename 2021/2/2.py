@@ -8,7 +8,7 @@ https://adventofcode.com/2021/day/2
 import sys
 
 def main():
-    with open('./input', 'r') as f:
+    with open('./input.txt', 'r') as f:
         #data = f.read().splitlines()
         #data = [int(x) for x in f.readlines()]
         #data = [tuple(line.split()) for line in f.readlines()]

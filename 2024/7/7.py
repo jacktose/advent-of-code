@@ -10,8 +10,8 @@ from typing import Callable, Sequence
 
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data), '= 3749?')
@@ -25,7 +25,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = [(int(target), tuple(int(num) for num in nums.split()))
                 for (target, nums) in (line.split(':', maxsplit=1) for line in f)]  # Too much?

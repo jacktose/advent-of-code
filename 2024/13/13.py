@@ -10,8 +10,8 @@ import re
 from typing import NamedTuple
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data), '= 480?')
@@ -25,7 +25,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = tuple(Claw.from_string(s) for s in f.read().split('\n\n'))
     return data

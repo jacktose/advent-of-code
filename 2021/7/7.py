@@ -17,7 +17,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = [int(n) for n in f.read().split(',')]
     return data

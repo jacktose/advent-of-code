@@ -7,8 +7,8 @@ Day 1: Calorie Counting
 
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data), '= 24000?')
@@ -24,7 +24,7 @@ def main():
 
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = f.read().splitlines()
     return data

@@ -13,7 +13,7 @@ from collections.abc import Generator, Reversible
 
 def main():
     print('example:')
-    ex_data: list[str] = get_input('./example')
+    ex_data: list[str] = get_input('./example.txt')
     e1, e2 = part_both(ex_data, debug=True)
     print('example 1:')
     print(e1, '= 26397?')
@@ -22,7 +22,7 @@ def main():
     #breakpoint()
     
     print('\nmain:')
-    data: list[str] = get_input('./input')
+    data: list[str] = get_input('./input.txt')
     p1, p2 = part_both(data)
     print('part 1:')
     print(p1)
@@ -30,7 +30,7 @@ def main():
     print(p2)
     #breakpoint()
 
-def get_input(file: str = './input') -> list[str]:
+def get_input(file: str = './input.txt') -> list[str]:
     with open(file, 'r') as f:
         data = f.read().splitlines()
     return data

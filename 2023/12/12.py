@@ -9,8 +9,8 @@ from functools import cache
 import re
 
 def main():
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data), '= 21?')
@@ -24,7 +24,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = [tuple(l.split()) for l in f]
     return data

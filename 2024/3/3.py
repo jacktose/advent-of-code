@@ -8,9 +8,9 @@ Day 3: Mull It Over
 import re
 
 def main():
-    ex_data_1 = get_input('./example1')
-    ex_data_2 = get_input('./example2')
-    data = get_input('./input')
+    ex_data_1 = get_input('./example1.txt')
+    ex_data_2 = get_input('./example2.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data_1), '= 161?')
@@ -24,7 +24,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = f.read()
     return data

@@ -16,10 +16,10 @@ from Grid import Direction, Grid_Sparse, Point
 
 
 def main():
-    ex_data_1 = get_input('./example1')
-    ex_data_2 = get_input('./example2')
-    ex_data_3 = get_input('./example3')
-    data = get_input('./input')
+    ex_data_1 = get_input('./example1.txt')
+    ex_data_2 = get_input('./example2.txt')
+    ex_data_3 = get_input('./example3.txt')
+    data = get_input('./input.txt')
     
     print('example 1.1:', part_1(ex_data_1, verbose=True), '= 2028?')
     print('\nexample 1.2:', part_1(ex_data_2), '= 10092?')
@@ -29,7 +29,7 @@ def main():
     print('\nexample 2.2:', part_2(ex_data_2), '= 9021?')
     print('\npart 2:', part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         [grid_str, moves_str] = f.read().split('\n\n')
         moves = tuple(Direction.from_arrow(char) for char in moves_str if char != '\n')

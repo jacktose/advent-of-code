@@ -8,8 +8,8 @@ Day 6: Tuning Trouble
 from collections import deque
 
 def main():
-    ex_data = get_ex_input('./example')
-    data = get_input('./input')
+    ex_data = get_ex_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     for ex_datum in ex_data:
@@ -27,12 +27,12 @@ def main():
 
     #breakpoint()
 
-def get_ex_input(file='./example'):
+def get_ex_input(file='./example.txt'):
     with open(file, 'r') as f:
         data = [line.split() for line in f]
     return data
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = f.read().rstrip()
     return data

@@ -14,7 +14,7 @@ def main():
     print(part_1(data), 'lanternfish')
     print(part_2(data), 'lanternfish')
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         # read every other character -> convert to int -> count frequency:
         # [::2] is sliiightly faster than .split(',')

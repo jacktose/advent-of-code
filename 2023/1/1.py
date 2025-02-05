@@ -8,9 +8,9 @@ Day 1: Trebuchet?!
 import re
 
 def main():
-    ex_data_1 = get_input('./example_1')
-    ex_data_2 = get_input('./example_2')
-    data = get_input('./input')
+    ex_data_1 = get_input('./example_1.txt')
+    ex_data_2 = get_input('./example_2.txt')
+    data = get_input('./input.txt')
     
     print('example 1:')
     print(part_1(ex_data_1), '= 142?')
@@ -26,7 +26,7 @@ def main():
 
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = f.read().splitlines()
     return data

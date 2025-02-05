@@ -6,13 +6,13 @@ Day 10: Pipe Maze
 """
 
 def main():
-    ex_data_1_1 = get_input('./example1.1')
-    ex_data_1_2 = get_input('./example1.2')
-    ex_data_2_1 = get_input('./example2.1')
-    ex_data_2_2 = get_input('./example2.2')
-    ex_data_2_3 = get_input('./example2.3')
-    ex_data_2_4 = get_input('./example2.4')
-    data = get_input('./input')
+    ex_data_1_1 = get_input('./example1.1.txt')
+    ex_data_1_2 = get_input('./example1.2.txt')
+    ex_data_2_1 = get_input('./example2.1.txt')
+    ex_data_2_2 = get_input('./example2.2.txt')
+    ex_data_2_3 = get_input('./example2.3.txt')
+    ex_data_2_4 = get_input('./example2.4.txt')
+    data = get_input('./input.txt')
     
     print('example 1.1:')
     print(part_1(ex_data_1_1), '= 4?')
@@ -34,7 +34,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input') -> tuple[tuple[str, ...], ...]:
+def get_input(file='./input.txt') -> tuple[tuple[str, ...], ...]:
     with open(file, 'r') as f:
         data = tuple(tuple(line) for line in f.read().splitlines())
     return data

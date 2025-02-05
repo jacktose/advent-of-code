@@ -14,7 +14,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = f.read().splitlines()
     # list of strings of digits -> list of tuples of ints:

@@ -16,33 +16,33 @@ def main():
     #print(part_1(demo_data, steps=2, debug=True), '= 9?\n')
     
     print('example 1:')
-    print(part_1('./example', debug=True), '= 1656?')
+    print(part_1('./example.txt', debug=True), '= 1656?')
     
     print('\npart 1:')
-    print(t.underline(str(part_1('./input'))), 'flashes')
+    print(t.underline(str(part_1('./input.txt'))), 'flashes')
     
     print('\nexample 2:')
-    print(part_2('./example', debug=False), '= 195?')
+    print(part_2('./example.txt', debug=False), '= 195?')
     
     print('\npart 2:')
-    print(t.underline(str(part_2('./input'))), 'steps to sync')
+    print(t.underline(str(part_2('./input.txt'))), 'steps to sync')
     #breakpoint()
 
-def part_1(input_file: str = './input', steps: int = 100, debug=False):
+def part_1(input_file: str = './input.txt', steps: int = 100, debug=False):
     '''How many total flashes are there after 100 steps?'''
     data: Sequence[Sequence[int]] = get_input(input_file)
     octos: Octopodes = Octopodes(data)
     flashes: int = octos.step(100, debug=debug)
     return flashes
 
-def part_2(input_file: str = './input', debug=False):
+def part_2(input_file: str = './input.txt', debug=False):
     '''What is the first step during which all octopuses flash?'''
     data: Sequence[Sequence[int]] = get_input(input_file)
     octos: Octopodes = Octopodes(data)
     step, _ = octos.step(1_000_000, stop_when_synced=True, debug=debug)
     return step
 
-def get_input(file: str ='./input'):
+def get_input(file: str ='./input.txt'):
     with open(file, 'r') as f:
         data: list[list[int]] = [[int(n) for n in line] for line in f.read().splitlines()]
     return data

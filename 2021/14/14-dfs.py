@@ -17,8 +17,8 @@ insertions = {}
 def main():
     global ex_insertions
     global insertions
-    ex_template, ex_insertions = get_input('./example')
-    template, insertions = get_input('./input')
+    ex_template, ex_insertions = get_input('./example.txt')
+    template, insertions = get_input('./input.txt')
     
     print('example 1:')
     print(part_both(ex_template, steps=10, example=True, debug=True), '= 1588?')
@@ -42,7 +42,7 @@ def main():
     #print(loops, secs, secs/loops, 's/loop')
     # 0.000174637049989542 s/loop
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         template = f.readline().rstrip()
         f.readline()

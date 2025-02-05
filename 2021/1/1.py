@@ -9,7 +9,7 @@ as intended with strings, except across length boundaries. ><
 import sys
 
 def main():
-    with open('./input', 'r') as f:
+    with open('./input.txt', 'r') as f:
         depths = [int(x) for x in f.readlines()]  # not explicitly casting to int *almost* works :[
     #print(len(depths))
     #print(depths)

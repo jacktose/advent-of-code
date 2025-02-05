@@ -17,10 +17,10 @@ curl --silent --fail \
     --user-agent 'https://github.com/jacktose/advent-of-code by jacktose' \
     "https://adventofcode.com/${YEAR}/day/${DAY}/input" \
 > "$tempfile" && \
-mv "$tempfile" "./${DAY}/input" && \
-chmod 444 "./${DAY}/input" || \
+mv "$tempfile" "./${DAY}/input.txt" && \
+chmod 444 "./${DAY}/input.txt" || \
 echo "Could not download input" >&2
-touch "./${DAY}/example"
+touch "./${DAY}/example.txt"
 rm -f "$tempfile"
 
 exit 0

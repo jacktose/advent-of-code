@@ -10,10 +10,10 @@ import math
 from typing import Callable
 
 def main():
-    ex_data_1_1 = get_input('./example1.1')
-    ex_data_1_2 = get_input('./example1.2')
-    ex_data_2 = get_input('./example2')
-    data = get_input('./input')
+    ex_data_1_1 = get_input('./example1.1.txt')
+    ex_data_1_2 = get_input('./example1.2.txt')
+    ex_data_2 = get_input('./example2.txt')
+    data = get_input('./input.txt')
     
     print('example 1.1:')
     print(part_1(ex_data_1_1), '= 2?')
@@ -29,7 +29,7 @@ def main():
     print('\npart 2:')
     print(part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = f.read().splitlines()
     steps = [{'L': 0, 'R': 1}[step] for step in data[0]]

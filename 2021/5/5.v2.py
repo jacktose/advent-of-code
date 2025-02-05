@@ -11,7 +11,7 @@ import re
 from collections import Counter
 
 def main():
-    with open('./input', 'r') as f:
+    with open('./input.txt', 'r') as f:
         # turn 'a,b -> c,d' into (a, b, c, d)
         data = ( (int(n) for n in re.split(r'\D+', line)) for line in f.read().splitlines() )
     counts_1 = Counter()

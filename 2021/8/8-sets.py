@@ -11,9 +11,9 @@ from timeit import timeit
 fset = frozenset
 
 def main():
-    ex1_data = get_input('./example1')
-    ex2_data = get_input('./example2')
-    data = get_input('./input')
+    ex1_data = get_input('./example1.txt')
+    ex2_data = get_input('./example2.txt')
+    data = get_input('./input.txt')
 
     print('example 1:')
     print(part_1(ex2_data))
@@ -32,7 +32,7 @@ def main():
     #print(timeit(lambda: part_2(data), number=10_000))
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     '''transform input file of lines like
     gbcefa eac acfbg ae dcabfg begcdaf ecgba fgaedc beaf gcbde | cbgfa gedcb fgecab fbagdc
     to list of tuples like

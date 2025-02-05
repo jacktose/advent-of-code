@@ -14,8 +14,8 @@ def main():
     myex_data = ((0, 1, 5),
                  (5, 1, 5),
                  (9, 1, 9))
-    ex_data = get_input('./example')
-    data = get_input('./input')
+    ex_data = get_input('./example.txt')
+    data = get_input('./input.txt')
     
     print('example 0:')
     print(part_1(myex_data), '= 12?')
@@ -33,7 +33,7 @@ def main():
     #print(part_2(data))
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = tuple(tuple(int(n) for n in line.rstrip()) for line in f)
     return data

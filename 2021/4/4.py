@@ -15,7 +15,7 @@ def main():
     print('\npart 2:')
     print('score:', part_2(data))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         #data = f.read().splitlines()
         data = f.read().split('\n\n')

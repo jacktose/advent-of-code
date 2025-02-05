@@ -19,7 +19,7 @@ def main():
     print('\npart 2:')
     print(part_2(data, print_grid=PRINT_GRID))
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         data = f.read().splitlines()
     return data

@@ -10,8 +10,8 @@ from collections import Counter
 from itertools import pairwise
 
 def main():
-    ex_template, ex_insertions = get_input('./example')
-    template, insertions = get_input('./input')
+    ex_template, ex_insertions = get_input('./example.txt')
+    template, insertions = get_input('./input.txt')
     
     print('example 1:')
     print(polymerize(ex_template, ex_insertions, steps=10, debug=True), '= 1588?')
@@ -26,7 +26,7 @@ def main():
     print(polymerize(template, insertions, steps=40, debug=False))
     # 0.003910795999981929 s/loop
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     with open(file, 'r') as f:
         template = f.readline().rstrip()
         f.readline()

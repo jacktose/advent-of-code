@@ -10,7 +10,7 @@ import math
 from collections.abc import Generator, Iterable
 
 def main():
-    ex_data = get_input('./example')
+    ex_data = get_input('./example.txt')
     data = get_input()
     
     print('example 1:')
@@ -25,7 +25,7 @@ def main():
     print('\npart 2:')
     print(part_2(data, debug=True), '= 1235430?')
 
-def get_input(file='./input') -> tuple[tuple[int, ...], ...]:
+def get_input(file='./input.txt') -> tuple[tuple[int, ...], ...]:
     with open(file, 'r') as f:
         data = tuple(tuple(int(n) for n in line) for line in f.read().splitlines())
     return data

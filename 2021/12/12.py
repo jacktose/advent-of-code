@@ -12,7 +12,7 @@ def main():
     ex1_data = get_input('./ex1')
     ex2_data = get_input('./ex2')
     ex3_data = get_input('./ex3')
-    data = get_input('./input')
+    data = get_input('./input.txt')
     
     print('example 1.1:')
     print(part_both(ex1_data, revisit=False, debug=True), '= 10?')
@@ -39,7 +39,7 @@ def main():
     print(part_both(data, revisit=True), 'paths')
     #breakpoint()
 
-def get_input(file='./input'):
+def get_input(file='./input.txt'):
     caves = defaultdict(set)
     with open(file, 'r') as f:
         # get pairs defining connected caves:
