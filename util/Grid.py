@@ -4,7 +4,8 @@ Classes & functions for representing and working with a 2D grid.
 
 from __future__ import annotations
 from abc import ABC
-from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
+from collections import deque
+from collections.abc import Callable, Collection, Generator, Iterable, Mapping, Sequence
 import enum
 from functools import singledispatchmethod
 from typing import NamedTuple, overload
@@ -300,6 +301,9 @@ class _Grid[T](Sequence[Sequence[T]], ABC):
     @contiguous.register
     def _(self, row: int, col:int):
         return self.contiguous(Point(row, col))
+    
+    def bfs(self, start: RowAndCol, end: RowAndCol) -> tuple[Point, ...]:
+        ...  # TODO: implement
 
 
 class Grid_Mutable[T](list[list[T]], _Grid[T]):
@@ -411,7 +415,7 @@ class Grid_Sparse[T](dict[Point, T]):
     # input as mapping of points to values
     @singledispatchmethod
     def __init__[T_in](self,
-                 grid: Mapping[Point|tuple[int, int], T_in],
+                 grid: Mapping[RowAndCol, T_in],
                  dimensions: RowAndCol|None = None,
                  transformer: Callable[[T_in], T] = lambda x: x,
                  bg_in: T|None = None,
@@ -454,6 +458,16 @@ class Grid_Sparse[T](dict[Point, T]):
         if self.dimensions is None:
             return True
         return point.row in range(self.dimensions.row) and point.col in range(self.dimensions.col)
+
+    @singledispatchmethod
+    def neighbors(self, point: Point|RowAndCol) -> Generator[tuple[Point, T]]:
+        STEPS = (Velocity(-1, 0), Velocity(0, 1), Velocity(1, 0), Velocity(0, -1))
+        for step in STEPS:
+            if self.in_bounds(neighbor := Point(*point) + step):
+                yield neighbor, self.get(neighbor, self.bg_out)
+    @neighbors.register
+    def _(self, row: int, col: int):
+        return self.neighbors(Point(row, col))
     
     def find(self, target: T) -> Point:
         return next(self.find_all(target))
@@ -462,6 +476,36 @@ class Grid_Sparse[T](dict[Point, T]):
         for point, val in self.items():
             if val == target:
                 yield point
+
+    def bfs(self, start: RowAndCol, end: RowAndCol, invalid: Collection[T] = set('#')) -> tuple[Point, ...]:
+        '''Breadth-first search. Returns path from start to end,
+        avoiding locations with invalid values (e.g. walls).
+        If no path, returns empty tuple.'''
+        start = Point(*start)
+        end = Point(*end)
+        invalid = set(invalid)
+
+        def backtrack(prevs: Mapping[Point, Point|None], end: Point) -> tuple[Point, ...]:
+            path = [end]
+            while (prev := prevs[path[-1]]) is not None:
+                path.append(prev)
+            return tuple(reversed(path))
+
+        todo = [start]
+        prev: dict[Point, Point|None] = {start: None}
+        for here in todo:
+            for neighbor, value in self.neighbors(here):
+                if neighbor in prev or value in invalid:
+                    continue
+                prev[neighbor] = here
+                if neighbor == end:
+                    return tuple(backtrack(prev, end))
+                todo.append(neighbor)
+        else:  # Can't reach end from start
+            return ()
+
+
+
 
 
 if __name__ == '__main__':
