@@ -87,6 +87,7 @@ class Direction(enum.Flag):
             Direction.W: Velocity(0, -speed),
             Direction.S: Velocity(speed, 0),
             Direction.E: Velocity(0, speed),
+            Direction.NONE: Velocity(0, 0),
         }[self]
     
     def cross(self, other: Direction) -> int:
@@ -177,6 +178,9 @@ class Velocity(RCPair):
     def __mul__(self, scalar: int) -> Velocity:
         return Velocity(self.row * scalar, self.col * scalar)
     
+    @property
+    def components(self):
+        return self.component_row, self.component_col
     @property
     def component_row(self):
         return Velocity(self.row, 0)

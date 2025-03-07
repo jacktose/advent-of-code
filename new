@@ -1,26 +1,45 @@
 #!/bin/bash
+
+# Compute some constants
 YEAR=${PWD##*/}
 [[ $YEAR =~ 20[[:digit:]][[:digit:]] ]] || { echo "Run from year directory." >&2; exit 2; }
 DAY=${1}
 [[ $DAY =~ [[:digit:]]?[[:digit:]] && 0 -lt "$DAY" && "$DAY" -lt 32 ]] || {
     echo "You have a bad day: $DAY" >&2; exit 2; }
 SCRIPTDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd )
+PYFILE="./${DAY}/${DAY}.py"
+URL="https://adventofcode.com/${YEAR}/day/${DAY}"
 
+# Create day directory and python file
 mkdir -p "./${DAY}" || { echo "Could not make directory: ./${DAY}" >&2; exit 3; }
-cp -i --no-preserve=mode,timestamps "${SCRIPTDIR}/template.py" "./${DAY}/${DAY}.py" && \
-chmod 755 "./${DAY}/${DAY}.py" 
+cp -i --no-preserve=mode,timestamps "${SCRIPTDIR}/template.py" "$PYFILE" && \
+chmod 755 "$PYFILE" 
 
+# Fill values into python file docstring
+tempfile=$(mktemp) && \
+curl --silent --fail \
+    --user-agent 'https://github.com/jacktose/advent-of-code by jacktose' \
+    "${URL}" \
+> "$tempfile" && \
+title="$(sed -n '/^<article class="day-desc"><h2>--- \(Day [12]\?[0-9]: .\+\) ---<\/h2>.*/{s//\1/p;q}' "$tempfile")" && \
+sed -i '/^"""/{n;s~^https:\/\/adventofcode.com\/[0-9]\{4\}\/day\/_~'"$URL"'~;n;s/^$/'"$title"'/; :loop n; b loop}' "$PYFILE" || \
+echo "Could not edit $pyfile" >&2
+rm -f "$tempfile"
+
+# Get input file
 COOKIE=$(<"${SCRIPTDIR}/.session_cookie") && \
 tempfile=$(mktemp) && \
 curl --silent --fail \
     --cookie "$COOKIE" \
     --user-agent 'https://github.com/jacktose/advent-of-code by jacktose' \
-    "https://adventofcode.com/${YEAR}/day/${DAY}/input" \
+    "${URL}/input" \
 > "$tempfile" && \
 mv "$tempfile" "./${DAY}/input.txt" && \
 chmod 444 "./${DAY}/input.txt" || \
 echo "Could not download input" >&2
-touch "./${DAY}/example.txt"
 rm -f "$tempfile"
+
+# Create example file
+touch "./${DAY}/example.txt"
 
 exit 0
