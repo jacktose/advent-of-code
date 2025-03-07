@@ -4,10 +4,10 @@ Classes & functions for representing and working with a 2D grid.
 
 from __future__ import annotations
 from abc import ABC
-from collections import deque
 from collections.abc import Callable, Collection, Generator, Iterable, Mapping, Sequence
 import enum
 from functools import singledispatchmethod
+import itertools
 from typing import NamedTuple, overload
 
 
@@ -156,6 +156,10 @@ class Point(RCPair):
         else:
             return Point(*super().__sub__(other))
     
+    def taxi_distance(self, other: Point|RowAndCol) -> int:
+        other = Point(*other)
+        return abs(other.row - self.row) + abs(other.col - self.col)
+    
 
 class Velocity(RCPair):
     '''A 2D velocity vector (in a cardinal direction)'''
@@ -277,14 +281,31 @@ class _Grid[T](Sequence[Sequence[T]], ABC):
                 yield point
 
     @singledispatchmethod
-    def neighbors(self, point: Point|RowAndCol) -> Generator[tuple[Point, T]]:
+    def neighbors(self, point: Point|RowAndCol, distance: int = 1) -> Generator[tuple[Point, T]]:
+        point = Point(*point)
         STEPS = (Velocity(-1, 0), Velocity(0, 1), Velocity(1, 0), Velocity(0, -1))
         for step in STEPS:
-            if self.in_bounds(neighbor := Point(*point) + step):
+            if self.in_bounds(neighbor := point + (step * distance)):
                 yield neighbor, self.get_value(neighbor)
     @neighbors.register
     def _(self, row: int, col: int):
         return self.neighbors(Point(row, col))
+
+    @singledispatchmethod
+    def neighbors_in_taxi_radius(self, point: Point|RowAndCol, radius: int) -> Generator[tuple[Point, T]]:
+        point = Point(*point)
+        DIAGS = (Velocity(1, 1), Velocity(1, -1), Velocity(-1, -1), Velocity(-1, 1))
+        for r in range(1, radius+1):
+            neighbor = point + Velocity(-r, 0)  # go north by r
+            for diag in DIAGS:
+                #for _ in range(r):
+                for _ in itertools.repeat(None, r):  # faster!
+                    if self.in_bounds(neighbor):
+                        yield neighbor, self.get_value(neighbor)
+                    neighbor += diag
+    @neighbors_in_taxi_radius.register
+    def _(self, row: int, col: int):
+        return self.neighbors_in_taxi_radius(Point(row, col))
 
     @singledispatchmethod
     def contiguous(self, origin: Point|RowAndCol) -> tuple[Point, ...]:
@@ -302,8 +323,32 @@ class _Grid[T](Sequence[Sequence[T]], ABC):
     def _(self, row: int, col:int):
         return self.contiguous(Point(row, col))
     
-    def bfs(self, start: RowAndCol, end: RowAndCol) -> tuple[Point, ...]:
-        ...  # TODO: implement
+    def bfs(self, start: RowAndCol, end: RowAndCol, invalid: Collection[T] = set('#')) -> tuple[Point, ...]:
+        '''Breadth-first search. Returns path from start to end,
+        avoiding locations with invalid values (e.g. walls).
+        If no path, returns empty tuple.'''
+        start = Point(*start)
+        end = Point(*end)
+        invalid = set(invalid)
+
+        def backtrack(prevs: Mapping[Point, Point|None], end: Point = end) -> tuple[Point, ...]:
+            path = [end]
+            while (prev := prevs[path[-1]]) is not None:
+                path.append(prev)
+            return tuple(reversed(path))
+
+        todo = [start]
+        prev: dict[Point, Point|None] = {start: None}
+        for here in todo:
+            for neighbor, value in self.neighbors(here):
+                if neighbor in prev or value in invalid:
+                    continue
+                prev[neighbor] = here
+                if neighbor == end:
+                    return tuple(backtrack(prev, end))
+                todo.append(neighbor)
+        else:  # Can't reach end from start
+            return ()
 
 
 class Grid_Mutable[T](list[list[T]], _Grid[T]):
@@ -485,7 +530,7 @@ class Grid_Sparse[T](dict[Point, T]):
         end = Point(*end)
         invalid = set(invalid)
 
-        def backtrack(prevs: Mapping[Point, Point|None], end: Point) -> tuple[Point, ...]:
+        def backtrack(prevs: Mapping[Point, Point|None], end: Point = end) -> tuple[Point, ...]:
             path = [end]
             while (prev := prevs[path[-1]]) is not None:
                 path.append(prev)
@@ -519,3 +564,16 @@ if __name__ == '__main__':
     print('test neighbors:')
     print(tuple(grid.neighbors(Point(0,0))))
     print(tuple(grid.neighbors(Point(1,1))))
+    print()
+
+    print('test taxi radius neighbors:')
+    grid = Grid_Immutable(((6,5,4,3,4,5,6),
+                           (5,4,3,2,3,4,5),
+                           (4,3,2,1,2,3,4),
+                           (3,2,1,0,1,2,3),
+                           (4,3,2,1,2,3,4),
+                           (5,4,3,2,3,4,5),
+                           (6,5,4,3,4,5,6)))
+    print(grid)
+    print(list(grid.neighbors_in_taxi_radius(Point(3,3), 3)))
+    print()
