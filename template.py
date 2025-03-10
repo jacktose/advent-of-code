@@ -9,10 +9,10 @@ def main():
     ex_data = get_input('./example.txt')
     data = get_input('./input.txt')
     
-    print('example 1:', part_1(ex_data), '= _?')
-    #print('\npart 1:', part_1(data))
-    #print('\nexample 2:', part_2(ex_data), '= _?')
-    #print('\npart 2:', part_2(data))
+    print('example 1:', part_1(ex_data), '= _?',    '\n')
+    #print('part 1:',    part_1(data),               '\n')
+    #print('example 2:', part_2(ex_data), '= _?',    '\n')
+    #print('part 2:',    part_2(data),               '\n')
 
 def get_input(file='./input.txt'):
     with open(file, 'r') as f:
