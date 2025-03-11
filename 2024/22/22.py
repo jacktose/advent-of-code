@@ -6,7 +6,7 @@ Day 22: Monkey Market
 """
 
 from collections import defaultdict, deque
-from collections.abc import Generator
+from collections.abc import Iterator
 from functools import cache
 from itertools import pairwise, repeat
 
@@ -63,7 +63,7 @@ def cycle(secret: int, n: int = 2000) -> int:
         secret = evolve(secret)
     return secret
 
-def prices(secret: int, n: int = 2000) -> Generator[int, None, None]:
+def prices(secret: int, n: int = 2000) -> Iterator[int]:
     '''Evolve secret number `n` times, yield price each time'''
     yield secret % 10
     for _ in repeat(None, n):

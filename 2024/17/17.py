@@ -5,8 +5,9 @@ https://adventofcode.com/2021/day/17
 Day 17: Chronospatial Computer
 """
 
+from collections.abc import Iterator, Sequence
 from dataclasses import InitVar, dataclass, field
-from typing import Generator, NamedTuple, Sequence
+from typing import NamedTuple
 
 
 def main():
@@ -63,7 +64,7 @@ class Program(tuple[int]):
     def __new__(cls, program: Sequence[int]):
         return super().__new__(cls, program)
 
-    def run(self, state: State) -> Generator[int, None, None]:
+    def run(self, state: State) -> Iterator[int]:
         while True:
             state, output = self.next_state_output(state)
             if state.halted or output is None:
@@ -82,7 +83,7 @@ class Program(tuple[int]):
         '''
         return next(self.find_a(self))
 
-    def find_a(self, target: tuple[int, ...]) -> Generator[int, None, None]:
+    def find_a(self, target: tuple[int, ...]) -> Iterator[int]:
         '''Recursively find the lowest A that produces the program sequence.'''
         if target == ():    # base case
             yield 0         # start with 0 because ...

@@ -5,7 +5,7 @@ https://adventofcode.com/2024/day/12
 Day 12: Garden Groups
 """
 
-from collections.abc import Collection, Generator
+from collections.abc import Collection, Iterator
 from itertools import pairwise
 from typing import Any
 
@@ -62,7 +62,7 @@ def part_2(data: Grid[Any]):
     price = area * sides'''
     return sum(len(region) * sides(region) for region in get_regions(data))
 
-def get_regions(data: Grid[Any]) -> Generator[Collection[tuple[int, int]]]:
+def get_regions(data: Grid[Any]) -> Iterator[Collection[tuple[int, int]]]:
     assigned = set()
     for point, _ in data.iter_all():
         if point in assigned:
@@ -71,7 +71,7 @@ def get_regions(data: Grid[Any]) -> Generator[Collection[tuple[int, int]]]:
         assigned.update(region)
         yield region
 
-def neighbors(point: tuple[int, int]) -> Generator[tuple[int, int]]:
+def neighbors(point: tuple[int, int]) -> Iterator[tuple[int, int]]:
     '''Generate all possible (rectalinear) neighbors of a point.'''
     row, col = point
     for d_row, d_col in ((-1, 0), (0, 1), (1, 0), (0, -1)):
